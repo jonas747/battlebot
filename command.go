@@ -103,7 +103,6 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 		return nil, ErrIncorrectNumArgs
 	}
 	fields = fields[1:]
-	log.Println(fields)
 
 	// Parse the arguments
 	parsedArgs := make([]*ParsedArgument, len(target.Arguments))
@@ -128,18 +127,13 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 				}
 			} else {
 				// Search for username
-				val = FindDiscordUser(field, m)
-				log.Println("RETURNED VAL", val)
+				val, err = FindDiscordUser(field, m)
 			}
 
 			if val == nil {
-				log.Println("Val is nil")
 				err = ErrDiscordUserNotFound
 			}
-			log.Println(val)
 		}
-
-		log.Println(val, "val == nil", val == nil, "val != nil", val != nil)
 
 		if err != nil {
 			return nil, err
@@ -158,25 +152,24 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 	}, nil
 }
 
-func FindDiscordUser(str string, m *discordgo.MessageCreate) *discordgo.User {
+func FindDiscordUser(str string, m *discordgo.MessageCreate) (*discordgo.User, error) {
 	channel, err := dgo.State.Channel(m.ChannelID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	guild, err := dgo.State.Guild(channel.GuildID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	dgo.State.RLock()
 	defer dgo.State.RUnlock()
 	for _, v := range guild.Members {
 		if strings.EqualFold(str, v.User.Username) {
-			return v.User
+			return v.User, nil
 		}
 	}
 
-	log.Println("no user found, returning nil")
-	return nil
+	return nil, ErrDiscordUserNotFound
 }

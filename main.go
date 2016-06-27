@@ -110,3 +110,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 func HandleReady(s *discordgo.Session, r *discordgo.Ready) {
 	log.Println("Ready received!")
 }
+
+func HandleServerJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
+	log.Println("Joined guild", g.Name, " Connected to ", len(s.State.Guilds), "Guilds")
+}
