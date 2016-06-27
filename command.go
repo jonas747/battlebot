@@ -9,10 +9,11 @@ import (
 )
 
 type CommandDef struct {
-	Name        string
-	Description string
-	Arguments   []*ArgumentDef
-	RunFunc     func(cmd *ParsedCommand, m *discordgo.MessageCreate)
+	Name         string
+	Description  string
+	OptionalArgs bool
+	Arguments    []*ArgumentDef
+	RunFunc      func(cmd *ParsedCommand, m *discordgo.MessageCreate)
 }
 
 func (c *CommandDef) String() string {
@@ -98,9 +99,12 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 
 	fields := strings.Fields(raw)
 
-	if len(fields)-1 != len(target.Arguments) {
+	if len(fields)-1 != len(target.Arguments) && !target.OptionalArgs {
+		return nil, ErrIncorrectNumArgs
+	} else if len(fields) > len(target.Arguments) {
 		return nil, ErrIncorrectNumArgs
 	}
+
 	fields = fields[1:]
 
 	// Parse the arguments
@@ -118,9 +122,6 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 			if strings.Index(field, "<@") == 0 {
 				// Direct mention
 				for _, v := range m.Mentions {
-					// idStr := field[2 : len(field)-2]
-					// fullStr := field
-					// log.Println(idStr, fullStr)
 					if field[2:len(field)-1] == v.ID {
 						val = v
 						break
