@@ -16,7 +16,11 @@ type CommandDef struct {
 }
 
 func (c *CommandDef) String() string {
-	return fmt.Sprintf("%s: %s. (%v)", c.Name, c.Description, c.Arguments)
+	out := fmt.Sprintf("%s: %s.", c.Name, c.Description, c.Arguments)
+	if len(c.Arguments) > 0 {
+		out += fmt.Sprintf("(%v)", c.Arguments)
+	}
+	return out
 }
 
 type ArgumentType int
