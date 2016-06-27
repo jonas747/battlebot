@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jonas747/discordgo"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -138,7 +137,6 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 				val, err = FindDiscordUser(field, m)
 			}
 
-			log.Println(field)
 			if val == nil {
 				err = ErrDiscordUserNotFound
 			}

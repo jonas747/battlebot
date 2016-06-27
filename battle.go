@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -19,23 +18,18 @@ type BattleManager struct {
 }
 
 func (bm *BattleManager) MaybeAddBattle(battle *Battle) bool {
-	log.Println("Locking bm")
 	bm.Lock()
 	defer bm.Unlock()
 
-	log.Println("Iterating")
 	for _, v := range bm.Battles {
 
-		log.Println("locking inner")
 		v.RLock()
-		log.Println("after lock")
 		if v.ContainsPlayer(battle.Initiator.Player, false) || v.ContainsPlayer(battle.Defender.Player, false) {
 			v.RUnlock()
 			return false // Already battling
 		}
 		v.RUnlock()
 	}
-	log.Println("Done iterating")
 
 	bm.Battles = append(bm.Battles, battle)
 	return true
