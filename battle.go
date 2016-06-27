@@ -166,8 +166,8 @@ func (b *Battle) Battle() {
 		attackersTurn = !attackersTurn
 	}
 
-	xpGain := (GetLevelFromXP(loser.Player.XP) / GetLevelFromXP(winner.Player.XP)) * 2
-	battleLog += fmt.Sprintf("**%s** Won again **%s** and earned %d XP! (%f vs %f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health)
+	xpGain := (GetLevelFromXP(loser.Player.XP) / GetLevelFromXP(winner.Player.XP)) * 5
+	battleLog += fmt.Sprintf("**%s** Won against **%s** and earned %d XP! (%f vs %f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health)
 
 	curLevel := GetLevelFromXP(winner.Player.XP)
 	winner.Player.XP += xpGain
