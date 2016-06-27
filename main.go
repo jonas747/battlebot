@@ -85,6 +85,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 			if v.RunFunc != nil {
 				v.RunFunc(parsed, m)
 			}
+			return nil
 		}
 	}
 
