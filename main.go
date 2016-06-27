@@ -55,7 +55,7 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if len(m.Mentions) > 0 && m.Mentions[0].ID == s.State.User.ID {
 		err := HandleCommand(m.Content, m)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error()+"See `@bot help` for more info")
+			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error()+" See `@bot help` for more info")
 		}
 	}
 }

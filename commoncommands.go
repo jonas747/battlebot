@@ -22,11 +22,13 @@ var CommonCommands = []*CommandDef{
 }
 
 func SendHelp(channel string) {
-	out := ""
+	out := "**BattleBot help**\n\n"
 
 	for _, cmd := range commands {
 		out += " - " + cmd.String() + "\n"
 	}
 
 	out += "\n" + VERSION
+
+	dgo.ChannelMessageSend(channel, out)
 }
