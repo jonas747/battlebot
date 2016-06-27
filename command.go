@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -121,8 +122,13 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 		case ArgumentTypeUser:
 			if strings.Index(field, "<@") == 0 {
 				// Direct mention
+				id := field[2 : len(field)-1]
+				if id[0] == '!' {
+					id = id[1:]
+				}
+
 				for _, v := range m.Mentions {
-					if field[2:len(field)-1] == v.ID {
+					if id == v.ID {
 						val = v
 						break
 					}
@@ -132,6 +138,7 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 				val, err = FindDiscordUser(field, m)
 			}
 
+			log.Println(field)
 			if val == nil {
 				err = ErrDiscordUserNotFound
 			}
