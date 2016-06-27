@@ -111,6 +111,9 @@ type Player struct {
 	Name string
 	Id   string
 	XP   int
+
+	Wins   int
+	Losses int
 }
 
 func NewPlayer(user *discordgo.User) *Player {

@@ -22,14 +22,29 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:        "stats",
-		Description: "Shows stats for a user",
+		Name:         "stats",
+		Description:  "Shows stats for a user",
+		OptionalArgs: true,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			user := p.Args[0].DiscordUser()
-			out := fmt.Sprintf("**%s#%s**", user.Username, user.Discriminator)
+			user := m.Author
+			if len(p.Args) > 0 && p.Args[0] != nil {
+				user = p.Args[0].DiscordUser()
+			}
+
+			player := playerManager.GetCreatePlayer(user.ID, user.Username)
+			player.RLock()
+
+			level := GetLevelFromXP(player.XP)
+			next := GetXPForLevel(level + 1)
+			diff := next - player.XP
+
+			out := fmt.Sprintf("**%s**\n - Level: %d\n - XP: %d\n - Wins: %d\n - Losses: %d",
+				player.Name, GetLevelFromXP(player.XP), diff, player.Wins, player.Losses)
+
+			player.RUnlock()
 			dgo.ChannelMessageSend(m.ChannelID, out)
 		},
 	},
