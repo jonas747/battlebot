@@ -101,7 +101,7 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 
 	if len(fields)-1 != len(target.Arguments) && !target.OptionalArgs {
 		return nil, ErrIncorrectNumArgs
-	} else if len(fields) > len(target.Arguments) {
+	} else if len(fields)-1 > len(target.Arguments) {
 		return nil, ErrIncorrectNumArgs
 	}
 
