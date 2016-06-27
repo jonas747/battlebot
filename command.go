@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -16,7 +17,7 @@ type CommandDef struct {
 }
 
 func (c *CommandDef) String() string {
-	out := fmt.Sprintf("%s: %s.", c.Name, c.Description, c.Arguments)
+	out := fmt.Sprintf("%s: %s.", c.Name, c.Description)
 	if len(c.Arguments) > 0 {
 		out += fmt.Sprintf("(%v)", c.Arguments)
 	}
@@ -71,6 +72,11 @@ func (p *ParsedArgument) Float() float64 {
 	return val
 }
 
+func (p *ParsedArgument) DiscordUser() *discordgo.User {
+	val, _ := p.Parsed.(*discordgo.User)
+	return val
+}
+
 type ParsedCommand struct {
 	Name string
 	Cmd  *CommandDef
@@ -78,10 +84,11 @@ type ParsedCommand struct {
 }
 
 var (
-	ErrIncorrectNumArgs = errors.New("Icorrect number of arguments")
+	ErrIncorrectNumArgs    = errors.New("Icorrect number of arguments")
+	ErrDiscordUserNotFound = errors.New("Discord user not found")
 )
 
-func ParseCommand(raw string, target *CommandDef) (*ParsedCommand, error) {
+func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*ParsedCommand, error) {
 	// No arguments passed
 	if len(target.Arguments) < 1 {
 		return &ParsedCommand{
@@ -92,13 +99,16 @@ func ParseCommand(raw string, target *CommandDef) (*ParsedCommand, error) {
 
 	fields := strings.Fields(raw)
 
-	if len(fields) != len(target.Arguments) {
+	if len(fields)-1 != len(target.Arguments) {
 		return nil, ErrIncorrectNumArgs
 	}
+	fields = fields[1:]
+	log.Println(fields)
 
 	// Parse the arguments
 	parsedArgs := make([]*ParsedArgument, len(target.Arguments))
 	for k, field := range fields {
+		log.Println(k, field)
 		var err error
 		var val interface{}
 
@@ -108,8 +118,28 @@ func ParseCommand(raw string, target *CommandDef) (*ParsedCommand, error) {
 		case ArgumentTypeString:
 			val = field
 		case ArgumentTypeUser:
-			// TODO
+			if strings.Index(field, "<@") == 0 {
+				// Direct mention
+				for _, v := range m.Mentions {
+					if field[2:len(field)-2] == v.ID {
+						val = v
+						break
+					}
+				}
+			} else {
+				// Search for username
+				val = FindDiscordUser(field, m)
+				log.Println("RETURNED VAL", val)
+			}
+
+			if val == nil {
+				log.Println("Val is nil")
+				err = ErrDiscordUserNotFound
+			}
+			log.Println(val)
 		}
+
+		log.Println(val, "val == nil", val == nil, "val != nil", val != nil)
 
 		if err != nil {
 			return nil, err
@@ -126,4 +156,27 @@ func ParseCommand(raw string, target *CommandDef) (*ParsedCommand, error) {
 		Cmd:  target,
 		Args: parsedArgs,
 	}, nil
+}
+
+func FindDiscordUser(str string, m *discordgo.MessageCreate) *discordgo.User {
+	channel, err := dgo.State.Channel(m.ChannelID)
+	if err != nil {
+		return nil
+	}
+
+	guild, err := dgo.State.Guild(channel.GuildID)
+	if err != nil {
+		return nil
+	}
+
+	dgo.State.RLock()
+	defer dgo.State.RUnlock()
+	for _, v := range guild.Members {
+		if strings.EqualFold(str, v.User.Username) {
+			return v.User
+		}
+	}
+
+	log.Println("no user found, returning nil")
+	return nil
 }

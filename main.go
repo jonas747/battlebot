@@ -5,6 +5,7 @@ import (
 	"flag"
 	"github.com/jonas747/discordgo"
 	"log"
+	"runtime/debug"
 	"strings"
 )
 
@@ -52,12 +53,18 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return // Wait till we have state initialized
 	}
 
-	if len(m.Mentions) > 0 && m.Mentions[0].ID == s.State.User.ID {
+	if len(m.Mentions) == 0 {
+		return
+	}
+
+	if strings.Index(m.Content, s.State.User.ID) == 2 {
 		err := HandleCommand(m.Content, m)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error()+" See `@bot help` for more info")
+			log.Println("Error handling command:", err)
 		}
 	}
+
 }
 
 var (
@@ -66,6 +73,14 @@ var (
 )
 
 func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
+	defer func() {
+		if r := recover(); r != nil {
+			stack := string(debug.Stack())
+			dgo.ChannelMessageSend(m.ChannelID, "Panic when handling Command!! ```\n"+stack+"\n```")
+			log.Println("Recovered from panic ", r, "\n", m.Content, "\n", stack)
+		}
+	}()
+
 	// Remove our mention
 	cmd = strings.Replace(cmd, "<@"+dgo.State.User.ID+">", "", 1)
 	cmd = strings.TrimSpace(cmd)
@@ -77,7 +92,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 
 	for _, v := range commands {
 		if v.Name == strings.ToLower(fields[0]) {
-			parsed, err := ParseCommand(cmd, v)
+			parsed, err := ParseCommand(cmd, m, v)
 			if err != nil {
 				return err
 			}
