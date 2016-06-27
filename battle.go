@@ -151,7 +151,7 @@ func (b *Battle) Battle() {
 			attacker = b.Defender
 			defender = b.Initiator
 		}
-		dmg := float64(attacker.Player.XP+1) * rand.NormFloat64() * 2
+		dmg := float64(attacker.Player.XP+1) * rand.Float64() * 2
 		originalHealth := defender.Health
 		defender.Health -= float32(dmg)
 
