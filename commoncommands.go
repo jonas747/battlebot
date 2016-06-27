@@ -38,11 +38,11 @@ var CommonCommands = []*CommandDef{
 			player.RLock()
 
 			level := GetLevelFromXP(player.XP)
-			next := GetXPForLevel(level + 1)
-			diff := next - player.XP
+			next := GetXPForLevel(level+1) - GetXPForLevel(level)
+			curXp := player.XP - GetXPForLevel(level)
 
-			out := fmt.Sprintf("**%s**\n - Level: %d\n - XP: %d\n - Wins: %d\n - Losses: %d",
-				player.Name, GetLevelFromXP(player.XP), diff, player.Wins, player.Losses)
+			out := fmt.Sprintf("**%s**\n - Level: %d\n - XP: %d(%d)(RAW:%d)\n - Wins: %d\n - Losses: %d",
+				player.Name, GetLevelFromXP(player.XP), curXp, next, player.XP, player.Wins, player.Losses)
 
 			player.RUnlock()
 			dgo.ChannelMessageSend(m.ChannelID, out)

@@ -181,7 +181,7 @@ func (b *Battle) Battle() {
 	b.Running = false
 
 	winner.Player.Wins++
-	loser.Player.Losses--
+	loser.Player.Losses++
 }
 
 func (b *Battle) ContainsPlayer(player *Player, lock bool) bool {

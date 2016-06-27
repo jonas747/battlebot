@@ -132,5 +132,5 @@ func GetLevelFromXP(xp int) int {
 }
 
 func GetXPForLevel(level int) int {
-	return (level * 10) + 1
+	return (level - 1) * 10
 }

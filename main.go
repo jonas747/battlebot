@@ -46,6 +46,7 @@ func main() {
 
 	log.Println("Launched!")
 	go battleManager.Run()
+	go playerManager.Run()
 	select {}
 }
 
