@@ -33,7 +33,7 @@ func PanicErr(err error) {
 }
 
 func main() {
-	log.Println("Launching battlebot v" + VERSION)
+	log.Println("Launching " + VERSION)
 
 	session, err := discordgo.New(flagToken)
 	PanicErr(err)
