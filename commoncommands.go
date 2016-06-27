@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 )
 
 var CommonCommands = []*CommandDef{
@@ -21,8 +22,8 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:        "whois",
-		Description: "WHO IS THIS",
+		Name:        "stats",
+		Description: "Shows stats for a user",
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
 		},
@@ -43,8 +44,44 @@ var CommonCommands = []*CommandDef{
 	&CommandDef{
 		Name:        "invite",
 		Description: "Responds with discord invite",
+
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			dgo.ChannelMessageSend(m.ChannelID, "**Invite link:** https://discordapp.com/oauth2/authorize?client_id=197048228099784704&scope=bot&permissions=101376")
+		},
+	},
+	&CommandDef{
+		Name:        "battle",
+		Description: "Requests a battle with another player",
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			user := p.Args[0].DiscordUser()
+			if m.Author.ID == user.ID {
+				dgo.ChannelMessageSend(m.ChannelID, "Can't fight yourself you idiot")
+				return
+			}
+
+			attacker := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			defender := playerManager.GetCreatePlayer(user.ID, user.Username)
+
+			battle := NewBattle(attacker, defender, m.ChannelID)
+			log.Println("Calling maybeaddbattle")
+			if battleManager.MaybeAddBattle(battle) {
+				dgo.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> Has requested a battle with <@%s>, you got 60 seconds.\nRepond with `@BattleBot accept`", m.Author.ID, user.ID))
+			} else {
+				dgo.ChannelMessageSend(m.ChannelID, "Did not request battle")
+			}
+			log.Println("after maybeaddbattle")
+		},
+	},
+	&CommandDef{
+		Name:        "accept",
+		Description: "Accepts the pending battle",
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			if !battleManager.MaybeAcceptBattle(m.Author.ID) {
+				dgo.ChannelMessageSend(m.ChannelID, "You have no pending battles")
+			}
 		},
 	},
 }

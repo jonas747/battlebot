@@ -45,6 +45,7 @@ func main() {
 	PanicErr(err)
 
 	log.Println("Launched!")
+	go battleManager.Run()
 	select {}
 }
 

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jonas747/discordgo"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -107,7 +106,6 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 	// Parse the arguments
 	parsedArgs := make([]*ParsedArgument, len(target.Arguments))
 	for k, field := range fields {
-		log.Println(k, field)
 		var err error
 		var val interface{}
 
@@ -120,7 +118,10 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 			if strings.Index(field, "<@") == 0 {
 				// Direct mention
 				for _, v := range m.Mentions {
-					if field[2:len(field)-2] == v.ID {
+					// idStr := field[2 : len(field)-2]
+					// fullStr := field
+					// log.Println(idStr, fullStr)
+					if field[2:len(field)-1] == v.ID {
 						val = v
 						break
 					}
