@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -158,7 +159,7 @@ func (b *Battle) Battle() {
 		originalHealth := defender.Health
 		defender.Health -= float32(dmg)
 
-		battleLog += fmt.Sprintf("**%s** Attacked **%s** with **%f** Damage! (**%f** -> **%f**)\n", attacker.Player.Name, defender.Player.Name, dmg, originalHealth, defender.Health)
+		battleLog += fmt.Sprintf("**%s** Attacked **%s** with **%.2f** Damage! (**%.2f** -> **%.2f**)\n", attacker.Player.Name, defender.Player.Name, dmg, originalHealth, defender.Health)
 
 		if defender.Health <= 0 {
 			winner = attacker
@@ -169,8 +170,10 @@ func (b *Battle) Battle() {
 		attackersTurn = !attackersTurn
 	}
 
-	xpGain := int(float32(GetLevelFromXP(loser.Player.XP)/GetLevelFromXP(winner.Player.XP)) * 5)
-	battleLog += fmt.Sprintf("**%s** Won against **%s** and earned %d XP! (%f vs %f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health)
+	xpRatio := float32(GetLevelFromXP(loser.Player.XP)) / float32(GetLevelFromXP(winner.Player.XP))
+	xpGain := int(xpRatio * 5)
+
+	battleLog += fmt.Sprintf("**%s** Won against **%s** and earned %d XP! (%.2f vs %.2f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health)
 
 	curLevel := GetLevelFromXP(winner.Player.XP)
 	winner.Player.XP += xpGain
