@@ -93,8 +93,21 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 		return ErrCommandEmpty
 	}
 
+	cmdName := strings.ToLower(fields[0])
+
 	for _, v := range commands {
-		if v.Name == strings.ToLower(fields[0]) {
+
+		match := v.Name == cmdName
+		if !match {
+			for _, alias := range v.Aliases {
+				if alias == cmdName {
+					match = true
+					break
+				}
+			}
+		}
+
+		if match {
 			parsed, err := ParseCommand(cmd, m, v)
 			if err != nil {
 				return err

@@ -162,7 +162,7 @@ func (p *Player) GetPrettyDiscordStats() string {
 	next := GetXPForLevel(level+1) - GetXPForLevel(level)
 	curXp := p.XP - GetXPForLevel(level)
 
-	general := fmt.Sprintf(" - Level: %d\n - Available points(assign with \"up attributename\" command): %d\n - XP: %d(%d)\n - Wins: %d\n - Losses: %d",
+	general := fmt.Sprintf(" - Level: %d\n - Attribute points: %d\n - XP: %d (%d)\n - Wins: %d\n - Losses: %d",
 		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Wins, p.Losses)
 
 	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance)",

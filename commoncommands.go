@@ -22,9 +22,9 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:         "stats",
-		Description:  "Shows stats for a user",
-		OptionalArgs: true,
+		Name:        "stats",
+		Aliases:     []string{"s"},
+		Description: "Shows stats for a user",
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
 		},
@@ -53,15 +53,16 @@ var CommonCommands = []*CommandDef{
 	},
 	&CommandDef{
 		Name:        "invite",
-		Description: "Responds with discord invite",
-
+		Description: "Responds with a bot invite link",
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			go SendMessage(m.ChannelID, "**Invite link:** https://discordapp.com/oauth2/authorize?client_id=197048228099784704&scope=bot&permissions=101376")
 		},
 	},
 	&CommandDef{
-		Name:        "battle",
-		Description: "Requests a battle with another player",
+		Name:         "battle",
+		Description:  "Requests a battle with another player",
+		Aliases:      []string{"b"},
+		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
 		},
@@ -86,6 +87,7 @@ var CommonCommands = []*CommandDef{
 	&CommandDef{
 		Name:        "accept",
 		Description: "Accepts the pending battle",
+		Aliases:     []string{"a"},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			if !battleManager.MaybeAcceptBattle(m.Author.ID) {
 				go SendMessage(m.ChannelID, "You have no pending battles")
@@ -93,12 +95,23 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:        "up",
-		Description: "Increases an attribute",
+		Name:         "up",
+		Description:  "Increases an attribute",
+		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "attribute", Type: ArgumentTypeString},
+			&ArgumentDef{Name: "amount", Type: ArgumentTypeNumber},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			num := 1
+			if len(p.Args) > 1 {
+				num = p.Args[1].Int()
+			}
+			if num < 1 {
+				go SendMessage(m.ChannelID, "You can't increase attributes by anything less than 1 dummy")
+				return
+			}
+
 			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
 			player.Lock()
 			defer player.Unlock()
@@ -116,16 +129,16 @@ var CommonCommands = []*CommandDef{
 			switch strings.ToLower(attribute) {
 			case "strength", "str":
 				realAttribute = "Strength"
-				player.Strength++
+				player.Strength += num
 			case "agility", "ag", "agi":
 				realAttribute = "Agility"
-				player.Agility++
+				player.Agility += num
 			case "stamina", "sta", "stam":
 				realAttribute = "Stamina"
-				player.Stamina++
+				player.Stamina += num
 			}
 
-			msg := fmt.Sprintf("Increased %s by 1\n\nCurrent stats:\n%s", realAttribute, player.GetPrettyDiscordStats())
+			msg := fmt.Sprintf("Increased %s by %d\n\nCurrent stats:\n%s", realAttribute, num, player.GetPrettyDiscordStats())
 
 			go SendMessage(m.ChannelID, msg)
 		},

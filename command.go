@@ -9,9 +9,11 @@ import (
 )
 
 type CommandDef struct {
-	Name         string
+	Name    string
+	Aliases []string
+
 	Description  string
-	OptionalArgs bool
+	RequiredArgs int
 	Arguments    []*ArgumentDef
 	RunFunc      func(cmd *ParsedCommand, m *discordgo.MessageCreate)
 }
@@ -19,7 +21,7 @@ type CommandDef struct {
 func (c *CommandDef) String() string {
 	out := fmt.Sprintf("%s: %s.", c.Name, c.Description)
 	if len(c.Arguments) > 0 {
-		out += fmt.Sprintf("(%v)", c.Arguments)
+		out += fmt.Sprintf("( %v )", c.Arguments)
 	}
 	return out
 }
@@ -49,7 +51,7 @@ func (a *ArgumentDef) String() string {
 		typeStr = "@User"
 	}
 
-	return a.Name + "(" + typeStr + ")"
+	return a.Name + ":" + typeStr + ""
 }
 
 type ParsedArgument struct {
@@ -99,9 +101,7 @@ func ParseCommand(raw string, m *discordgo.MessageCreate, target *CommandDef) (*
 
 	fields := strings.Fields(raw)
 
-	if len(fields)-1 != len(target.Arguments) && !target.OptionalArgs {
-		return nil, ErrIncorrectNumArgs
-	} else if len(fields)-1 > len(target.Arguments) {
+	if len(fields)-1 < target.RequiredArgs {
 		return nil, ErrIncorrectNumArgs
 	}
 
