@@ -150,7 +150,7 @@ func (p *Player) AvailableAttributePoints() int {
 }
 
 func (p *Player) BaseDodgeChange() float32 {
-	return (float32(p.Agility) / (float32(p.Agility) + 100)) * 100
+	return ((float32(p.Agility) / (float32(p.Agility) + 100)) * 80) + 20
 }
 
 func (p *Player) BaseDamage() float32 {
