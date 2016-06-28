@@ -40,6 +40,7 @@ func main() {
 
 	session.AddHandler(MessageHandler)
 	session.AddHandler(HandleReady)
+	session.AddHandler(HandleServerJoin)
 	dgo = session
 	err = session.Open()
 	PanicErr(err)
@@ -62,7 +63,7 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.Index(m.Content, s.State.User.ID) == 2 {
 		err := HandleCommand(m.Content, m)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error: "+err.Error()+" See `@bot help` for more info")
+			SendMessage(m.ChannelID, "Error: "+err.Error()+" See `@bot help` for more info")
 			log.Println("Error handling command:", err)
 		}
 	}
@@ -78,7 +79,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 	defer func() {
 		if r := recover(); r != nil {
 			stack := string(debug.Stack())
-			dgo.ChannelMessageSend(m.ChannelID, "Panic when handling Command!! ```\n"+stack+"\n```")
+			SendMessage(m.ChannelID, "Panic when handling Command!! ```\n"+stack+"\n```")
 			log.Println("Recovered from panic ", r, "\n", m.Content, "\n", stack)
 		}
 	}()
@@ -110,9 +111,9 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 }
 
 func HandleReady(s *discordgo.Session, r *discordgo.Ready) {
-	log.Println("Ready received!")
+	log.Println("Ready received! Connected to", len(s.State.Guilds), "Guilds")
 }
 
 func HandleServerJoin(s *discordgo.Session, g *discordgo.GuildCreate) {
-	log.Println("Joined guild", g.Name, " Connected to ", len(s.State.Guilds), "Guilds")
+	log.Println("Joined guild", g.Name, " Connected to", len(s.State.Guilds), "Guilds")
 }

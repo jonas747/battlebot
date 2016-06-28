@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
-	"log"
+	"strings"
 )
 
 var CommonCommands = []*CommandDef{
@@ -18,7 +18,7 @@ var CommonCommands = []*CommandDef{
 		Name:        "echo",
 		Description: "Make me say stuff ;)",
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			dgo.ChannelMessageSend(m.ChannelID, m.ContentWithMentionsReplaced())
+			go SendMessage(m.ChannelID, m.ContentWithMentionsReplaced())
 		},
 	},
 	&CommandDef{
@@ -37,15 +37,10 @@ var CommonCommands = []*CommandDef{
 			player := playerManager.GetCreatePlayer(user.ID, user.Username)
 			player.RLock()
 
-			level := GetLevelFromXP(player.XP)
-			next := GetXPForLevel(level+1) - GetXPForLevel(level)
-			curXp := player.XP - GetXPForLevel(level)
-
-			out := fmt.Sprintf("**%s**\n - Level: %d\n - XP: %d(%d)(RAW:%d)\n - Wins: %d\n - Losses: %d",
-				player.Name, GetLevelFromXP(player.XP), curXp, next, player.XP, player.Wins, player.Losses)
+			out := "**Stats**\n" + player.GetPrettyDiscordStats()
 
 			player.RUnlock()
-			dgo.ChannelMessageSend(m.ChannelID, out)
+			go SendMessage(m.ChannelID, out)
 		},
 	},
 	&CommandDef{
@@ -61,7 +56,7 @@ var CommonCommands = []*CommandDef{
 		Description: "Responds with discord invite",
 
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			dgo.ChannelMessageSend(m.ChannelID, "**Invite link:** https://discordapp.com/oauth2/authorize?client_id=197048228099784704&scope=bot&permissions=101376")
+			go SendMessage(m.ChannelID, "**Invite link:** https://discordapp.com/oauth2/authorize?client_id=197048228099784704&scope=bot&permissions=101376")
 		},
 	},
 	&CommandDef{
@@ -73,7 +68,7 @@ var CommonCommands = []*CommandDef{
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			user := p.Args[0].DiscordUser()
 			if m.Author.ID == user.ID {
-				dgo.ChannelMessageSend(m.ChannelID, "Can't fight yourself you idiot")
+				go SendMessage(m.ChannelID, "Can't fight yourself you idiot")
 				return
 			}
 
@@ -81,13 +76,11 @@ var CommonCommands = []*CommandDef{
 			defender := playerManager.GetCreatePlayer(user.ID, user.Username)
 
 			battle := NewBattle(attacker, defender, m.ChannelID)
-			log.Println("Calling maybeaddbattle")
 			if battleManager.MaybeAddBattle(battle) {
-				dgo.ChannelMessageSend(m.ChannelID, fmt.Sprintf("<@%s> Has requested a battle with <@%s>, you got 60 seconds.\nRepond with `@BattleBot accept`", m.Author.ID, user.ID))
+				go SendMessage(m.ChannelID, fmt.Sprintf("<@%s> Has requested a battle with <@%s>, you got 60 seconds.\nRepond with `@BattleBot accept`", m.Author.ID, user.ID))
 			} else {
-				dgo.ChannelMessageSend(m.ChannelID, "Did not request battle")
+				go SendMessage(m.ChannelID, "Did not request battle")
 			}
-			log.Println("after maybeaddbattle")
 		},
 	},
 	&CommandDef{
@@ -95,8 +88,46 @@ var CommonCommands = []*CommandDef{
 		Description: "Accepts the pending battle",
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			if !battleManager.MaybeAcceptBattle(m.Author.ID) {
-				dgo.ChannelMessageSend(m.ChannelID, "You have no pending battles")
+				go SendMessage(m.ChannelID, "You have no pending battles")
 			}
+		},
+	},
+	&CommandDef{
+		Name:        "up",
+		Description: "Increases an attribute",
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "attribute", Type: ArgumentTypeString},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			player.Lock()
+			defer player.Unlock()
+
+			availablePoints := GetLevelFromXP(player.XP) - player.UsedAttributePoints()
+
+			if availablePoints <= 0 {
+				go SendMessage(m.ChannelID, "No available attribute points")
+				return
+			}
+
+			attribute := p.Args[0].Str()
+
+			realAttribute := ""
+			switch strings.ToLower(attribute) {
+			case "strength", "str":
+				realAttribute = "Strength"
+				player.Strength++
+			case "agility", "ag", "agi":
+				realAttribute = "Agility"
+				player.Agility++
+			case "stamina", "sta", "stam":
+				realAttribute = "Stamina"
+				player.Stamina++
+			}
+
+			msg := fmt.Sprintf("Increased %s by 1\n\nCurrent stats:\n%s", realAttribute, player.GetPrettyDiscordStats())
+
+			go SendMessage(m.ChannelID, msg)
 		},
 	},
 }
@@ -110,5 +141,5 @@ func SendHelp(channel string) {
 
 	out += "\n" + VERSION
 
-	dgo.ChannelMessageSend(channel, out)
+	go SendMessage(channel, out)
 }

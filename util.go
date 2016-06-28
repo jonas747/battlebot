@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 )
 
@@ -64,4 +65,12 @@ func copyFileContents(src, dst string) (err error) {
 	}
 	err = out.Sync()
 	return
+}
+
+// Simple wrapper that resends if it failed
+func SendMessage(channel, msg string) {
+	_, err := dgo.ChannelMessageSend(channel, msg)
+	if err != nil {
+		log.Println("Error sending message", err)
+	}
 }

@@ -120,7 +120,7 @@ func (b *Battle) Expire(lock bool) {
 		defer b.Unlock()
 	}
 
-	dgo.ChannelMessageSend(b.Channel, "<@"+b.Initiator.Player.Id+"> Your battle with"+b.Defender.Player.Id+" Has expired")
+	go SendMessage(b.Channel, "<@"+b.Initiator.Player.Id+"> Your battle with"+b.Defender.Player.Id+" Has expired")
 }
 
 func (b *Battle) Battle() {
@@ -145,7 +145,16 @@ func (b *Battle) Battle() {
 			attacker = b.Defender
 			defender = b.Initiator
 		}
-		dmg := float64(attacker.Player.XP+1) * rand.Float64() * 2
+
+		// Check if defender dodged
+		dodgeChance := defender.DodgeChance()
+		if rand.Intn(100) < int(dodgeChance) {
+			battleLog += fmt.Sprintf("**%s** Dodged **%s**\n", defender.Player.Name, attacker.Player.Name)
+			attackersTurn = !attackersTurn
+			continue
+		}
+
+		dmg := attacker.Damage() * (rand.Float32() + 0.5) // The damage varies from 50% to 150%
 		originalHealth := defender.Health
 		defender.Health -= float32(dmg)
 
@@ -160,7 +169,7 @@ func (b *Battle) Battle() {
 		attackersTurn = !attackersTurn
 	}
 
-	xpGain := (GetLevelFromXP(loser.Player.XP) / GetLevelFromXP(winner.Player.XP)) * 5
+	xpGain := int(float32(GetLevelFromXP(loser.Player.XP)/GetLevelFromXP(winner.Player.XP)) * 5)
 	battleLog += fmt.Sprintf("**%s** Won against **%s** and earned %d XP! (%f vs %f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health)
 
 	curLevel := GetLevelFromXP(winner.Player.XP)
@@ -170,7 +179,7 @@ func (b *Battle) Battle() {
 		battleLog += fmt.Sprintf("**%s** Reached Level **%d**!", winner.Player.Name, newLevel)
 	}
 
-	dgo.ChannelMessageSend(b.Channel, battleLog)
+	go SendMessage(b.Channel, battleLog)
 	b.Finished = true
 	b.Running = false
 
@@ -186,16 +195,4 @@ func (b *Battle) ContainsPlayer(player *Player, lock bool) bool {
 
 	contains := b.Initiator.Player.Id == player.Id || b.Defender.Player.Id == player.Id
 	return contains
-}
-
-type BattlePlayer struct {
-	Health float32
-	Player *Player
-}
-
-func NewBattlePlayer(player *Player) *BattlePlayer {
-	return &BattlePlayer{
-		Health: 10,
-		Player: player,
-	}
 }
