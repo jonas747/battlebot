@@ -16,13 +16,6 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:        "echo",
-		Description: "Make me say stuff ;)",
-		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			go SendMessage(m.ChannelID, m.ContentWithMentionsReplaced())
-		},
-	},
-	&CommandDef{
 		Name:        "stats",
 		Aliases:     []string{"s"},
 		Description: "Shows stats for a user",
@@ -42,14 +35,6 @@ var CommonCommands = []*CommandDef{
 
 			player.RUnlock()
 			go SendMessage(m.ChannelID, out)
-		},
-	},
-	&CommandDef{
-		Name:        "panic",
-		Description: "This will panic",
-		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			var u *CommandDef
-			u.Name = "wont happen"
 		},
 	},
 	&CommandDef{
@@ -255,7 +240,7 @@ var CommonCommands = []*CommandDef{
 				}
 				go SendMessage(m.ChannelID, out)
 			} else {
-				out := "**Items** (see `i {itemid}` for more info about an item\n"
+				out := "**Items** (see `i {itemid}` for more info about an item)\n"
 				for k, item := range itemTypes {
 					eqStr := ""
 
@@ -322,6 +307,7 @@ var CommonCommands = []*CommandDef{
 		Name:         "create",
 		Description:  "Creates an item for someone (admin only)",
 		RequiredArgs: 1,
+		HideFromHelp: true,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "id", Type: ArgumentTypeNumber},
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
@@ -424,12 +410,47 @@ var CommonCommands = []*CommandDef{
 			go SendMessage(m.ChannelID, fmt.Sprintf("**%s** Gave **%s** %s(#%d)", sender.Name, receiver.Name, itemType.Name, itemType.Id))
 		},
 	},
+	&CommandDef{
+		Name:         "givemoney",
+		Aliases:      []string{"givem", "gm"},
+		Description:  "Give someone money",
+		RequiredArgs: 2,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "Money", Description: "Money you want to give", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "Receiver", Description: "Person who's receiving the item", Type: ArgumentTypeUser},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			amount := p.Args[0].Int()
+
+			sender := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			receiverUser := p.Args[1].DiscordUser()
+			receiver := playerManager.GetCreatePlayer(receiverUser.ID, receiverUser.Username)
+
+			sender.Lock()
+			if sender.Money < amount {
+				go SendMessage(m.ChannelID, "Not enough money to send")
+				sender.Unlock()
+				return
+			}
+
+			sender.Money -= amount
+			sender.Unlock()
+
+			receiver.Lock()
+			receiver.Money += amount
+			go SendMessage(m.ChannelID, fmt.Sprintf("**%s** Gave **%s** %s$ (%d$ -> %d$)", sender.Name, receiver.Name, amount, receiver.Money-amount, receiver.Money))
+			receiver.Unlock()
+		},
+	},
 }
 
 func SendHelp(channel string) {
 	out := "**BattleBot help**\n\n"
 
 	for _, cmd := range commands {
+		if cmd.HideFromHelp {
+			continue
+		}
 		out += " - " + cmd.String() + "\n"
 	}
 
