@@ -37,7 +37,11 @@ func (p *BattlePlayer) Init(opponent *BattlePlayer, battle *Battle) { // initial
 		v.Init(p, opponent, battle)
 		v.Apply()
 	}
-	p.Health = float32(p.Player.MaxHealth() + p.Attributes.Get(AttributeStamina))
+	p.Health = p.MaxHealth()
+}
+
+func (p *BattlePlayer) MaxHealth() float32 {
+	return float32(p.Player.MaxHealth() + p.Attributes.Get(AttributeStamina))
 }
 
 func (p *BattlePlayer) NextTurn() {
