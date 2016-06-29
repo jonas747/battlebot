@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/jonas747/discordgo"
 	"io/ioutil"
@@ -116,9 +117,8 @@ type Player struct {
 	Wins   int
 	Losses int
 
-	Strength int // Increases raw damage output
-	Stamina  int // Increases raw health
-	Agility  int // Increases chance to dodge attacks
+	Attributes AttributeContainer
+	Inventory  []*PlayerItem
 }
 
 func NewPlayer(user *discordgo.User) *Player {
@@ -137,12 +137,27 @@ func GetXPForLevel(level int) int {
 	return (level - 1) * 10
 }
 
+func (p *Player) EquipItem(invSlot int, eqSlot EquipmentSlot) error {
+	if invSlot >= len(p.Inventory) {
+		return errors.New("That inventory slot does not exist, check with the inventory command")
+	}
+
+	for _, v := range p.Inventory {
+		if v.EquipmentSlot == eqSlot {
+			v.EquipmentSlot = EquipmentSlotNone
+		}
+	}
+
+	p.Inventory[invSlot].EquipmentSlot = eqSlot
+	return nil
+}
+
 func (p *Player) MaxHealth() int {
-	return GetLevelFromXP(p.XP) + p.Stamina + 10
+	return GetLevelFromXP(p.XP) + p.Attributes.Get(AttributeStamina) + 10
 }
 
 func (p *Player) UsedAttributePoints() int {
-	return p.Strength + p.Stamina + p.Agility
+	return p.Attributes.Get(AttributeStrength) + p.Attributes.Get(AttributeStamina) + p.Attributes.Get(AttributeAgility)
 }
 
 func (p *Player) AvailableAttributePoints() int {
@@ -150,11 +165,11 @@ func (p *Player) AvailableAttributePoints() int {
 }
 
 func (p *Player) BaseDodgeChange() float32 {
-	return ((float32(p.Agility) / (float32(p.Agility) + 100)) * 80) + 20
+	return GetDodgeChance(float32(p.Attributes.Get(AttributeAgility)))
 }
 
 func (p *Player) BaseDamage() float32 {
-	return float32(GetLevelFromXP(p.XP) + p.Strength)
+	return float32(GetLevelFromXP(p.XP) + p.Attributes.Get(AttributeStrength))
 }
 
 func (p *Player) GetPrettyDiscordStats() string {
@@ -166,7 +181,7 @@ func (p *Player) GetPrettyDiscordStats() string {
 		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Wins, p.Losses)
 
 	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance)",
-		p.Strength, p.Stamina, p.Agility)
+		p.Attributes.Get(AttributeStrength), p.Attributes.Get(AttributeStamina), p.Attributes.Get(AttributeAgility))
 
 	stats := fmt.Sprintf(" - Health: %d\n - Damage %.2f\n - Dodge Chance: %.2f%%", p.MaxHealth(), p.BaseDamage(), p.BaseDodgeChange())
 

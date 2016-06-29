@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jonas747/discordgo"
+	"log"
 	"strings"
 )
 
@@ -118,29 +119,174 @@ var CommonCommands = []*CommandDef{
 
 			availablePoints := GetLevelFromXP(player.XP) - player.UsedAttributePoints()
 
-			if availablePoints <= 0 {
+			if availablePoints < num {
 				go SendMessage(m.ChannelID, "No available attribute points")
 				return
 			}
 
-			attribute := p.Args[0].Str()
+			attributeString := p.Args[0].Str()
 
-			realAttribute := ""
-			switch strings.ToLower(attribute) {
+			var attribute AttributeType
+
+			switch strings.ToLower(attributeString) {
 			case "strength", "str":
-				realAttribute = "Strength"
-				player.Strength += num
+				attribute = AttributeStrength
 			case "agility", "ag", "agi":
-				realAttribute = "Agility"
-				player.Agility += num
+				attribute = AttributeAgility
 			case "stamina", "sta", "stam":
-				realAttribute = "Stamina"
-				player.Stamina += num
+				attribute = AttributeStamina
 			}
 
-			msg := fmt.Sprintf("Increased %s by %d\n\nCurrent stats:\n%s", realAttribute, num, player.GetPrettyDiscordStats())
+			player.Attributes.Modify(attribute, num)
+
+			msg := fmt.Sprintf("Increased %s by %d\n\nCurrent stats:\n%s", StringAttributeType(attribute), num, player.GetPrettyDiscordStats())
 
 			go SendMessage(m.ChannelID, msg)
+		},
+	},
+	&CommandDef{
+		Name:        "inventory",
+		Description: "Shows your inventory and equipment",
+		Aliases:     []string{"inv", "equipment"},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			out := "**Iventory**\n"
+
+			if len(player.Inventory) < 1 {
+				out += "*dust* (you have no items)"
+				SendMessage(m.ChannelID, out)
+				return
+			}
+
+			for k, v := range player.Inventory {
+				out += fmt.Sprintf("[%d]", k)
+				itemType := GetItemTypeById(v.Id)
+				if itemType == nil {
+					log.Println("Encountered unknown item id", v.Id, "User:", m.Author.ID)
+					out += " - Unknown!?!? (contact the jonizz)\n"
+					continue
+				}
+				out += fmt.Sprintf(" - %s (id: %d) - %s", itemType.Name, itemType.Id, itemType.Description)
+				if v.EquipmentSlot != EquipmentSlotNone {
+					out += fmt.Sprintf(" (Equipped %s)", StringEquipmentSlot(v.EquipmentSlot))
+				}
+				out += "\n"
+			}
+
+			SendMessage(m.ChannelID, out)
+		},
+	},
+	&CommandDef{
+		Name:         "item",
+		Description:  "Shows info about an item",
+		Aliases:      []string{"i"},
+		RequiredArgs: 1,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "itemid", Type: ArgumentTypeNumber},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			id := p.Args[0].Int()
+
+			itemType := GetItemTypeById(id)
+			if itemType == nil {
+				go SendMessage(m.ChannelID, "Unknown item")
+				return
+			}
+
+			out := fmt.Sprintf("#%d - **%s**\n%s\n", itemType.Id, itemType.Name, itemType.Description)
+			if len(itemType.Slots) > 0 {
+				out += " - Can be equipped as: "
+				for k, slot := range itemType.Slots {
+					if k != 0 {
+						out += ", "
+					}
+					out += StringEquipmentSlot(slot)
+				}
+				out += "\n"
+			}
+			pasiveEffects := itemType.Item.GetStaticAttributes()
+			if len(pasiveEffects) > 0 {
+				out += "\nPassive attributes:\n"
+				for _, effect := range pasiveEffects {
+					out += fmt.Sprintf(" - %s: %d", StringAttributeType(effect.Type), effect.Val)
+				}
+			}
+			go SendMessage(m.ChannelID, out)
+		},
+	},
+	&CommandDef{
+		Name:         "equip",
+		Description:  "Equips an item from your inventory",
+		Aliases:      []string{"eq"},
+		RequiredArgs: 1,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "inventoryslot", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "equipmentslot", Type: ArgumentTypeString},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			invSlot := p.Args[0].Int()
+
+			var equipmentSlot EquipmentSlot
+			if len(p.Args) > 1 && p.Args[1] != nil {
+				slotString := p.Args[1].Str()
+				equipmentSlot = EquipmentSlotFromString(slotString)
+			}
+
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			player.RLock()
+			if invSlot >= len(player.Inventory) || invSlot < 0 {
+				go SendMessage(m.ChannelID, "That inventory slot dosen't exist, see the inventory command for more info")
+				player.RUnlock()
+				return
+			}
+			itemType := GetItemTypeById(player.Inventory[invSlot].Id)
+
+			player.RUnlock()
+			if equipmentSlot == EquipmentSlotNone {
+				if itemType == nil {
+					SendMessage(m.ChannelID, "Unknown item at slot")
+					return
+				}
+				equipmentSlot = itemType.Slots[0]
+			}
+
+			player.Lock()
+			err := player.EquipItem(invSlot, equipmentSlot)
+			if err != nil {
+				go SendMessage(m.ChannelID, "Failed: "+err.Error())
+			} else {
+				go SendMessage(m.ChannelID, fmt.Sprintf("Equipped %s in %s", itemType.Name, StringEquipmentSlot(equipmentSlot)))
+			}
+			player.Unlock()
+		},
+	},
+	&CommandDef{
+		Name:         "give",
+		Description:  "Gives someone an item (admin only)",
+		RequiredArgs: 1,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "id", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			user := m.Author
+			if len(p.Args) > 1 && p.Args[1] != nil {
+				user = p.Args[1].DiscordUser()
+			}
+
+			itemType := GetItemTypeById(p.Args[0].Int())
+
+			if itemType == nil {
+				go SendMessage(m.ChannelID, "Unknown item")
+				return
+			}
+
+			player := playerManager.GetCreatePlayer(user.ID, user.Username)
+			player.Lock()
+			player.Inventory = append(player.Inventory, &PlayerItem{Id: itemType.Id})
+
+			go SendMessage(m.ChannelID, fmt.Sprintf("Gave **%s** %s (#%d)", player.Name, itemType.Name, itemType.Id))
+			player.Unlock()
 		},
 	},
 }
