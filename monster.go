@@ -80,7 +80,7 @@ func GetMonster(level int) *Monster {
 	monster := &Monster{
 		Player: &Player{
 			Name:  modifier.String() + " " + monsterType.Name,
-			XP:    GetXPForLevel((level - 2) + int(modifier)),
+			XP:    GetXPForLevel((level - 1) + int(modifier)),
 			Money: 2 + int(modifier)*2,
 		},
 	}

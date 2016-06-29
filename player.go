@@ -170,7 +170,7 @@ func (p *Player) BaseDodgeChange() float32 {
 }
 
 func (p *Player) BaseDamage() float32 {
-	return float32(GetLevelFromXP(p.XP) + p.Attributes.Get(AttributeStrength))
+	return float32(GetLevelFromXP(p.XP)+p.Attributes.Get(AttributeStrength)) + 2
 }
 
 func (p *Player) GetPrettyDiscordStats() string {
