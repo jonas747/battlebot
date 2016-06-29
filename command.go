@@ -22,6 +22,9 @@ func (c *CommandDef) String() string {
 	out := fmt.Sprintf("%s: %s.", c.Name, c.Description)
 	if len(c.Arguments) > 0 {
 		out += fmt.Sprintf("( %v )", c.Arguments)
+		for _, v := range c.Arguments {
+			out += fmt.Sprintf("\n - %s - %s", v.String(), v.Description)
+		}
 	}
 	return out
 }
@@ -34,24 +37,27 @@ const (
 	ArgumentTypeUser
 )
 
+func (a ArgumentType) String() string {
+	switch a {
+	case ArgumentTypeString:
+		return "String"
+	case ArgumentTypeNumber:
+		return "Number"
+	case ArgumentTypeUser:
+		return "@User"
+	}
+	return "???"
+}
+
 type ArgumentDef struct {
-	Name string
-	Type ArgumentType
+	Name        string
+	Description string
+	Type        ArgumentType
 }
 
 func (a *ArgumentDef) String() string {
-	typeStr := ""
 
-	switch a.Type {
-	case ArgumentTypeString:
-		typeStr = "String"
-	case ArgumentTypeNumber:
-		typeStr = "Number"
-	case ArgumentTypeUser:
-		typeStr = "@User"
-	}
-
-	return a.Name + ":" + typeStr + ""
+	return a.Name + ":" + a.Type.String() + ""
 }
 
 type ParsedArgument struct {

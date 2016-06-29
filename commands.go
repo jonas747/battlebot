@@ -27,7 +27,7 @@ var CommonCommands = []*CommandDef{
 		Aliases:     []string{"s"},
 		Description: "Shows stats for a user",
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
+			&ArgumentDef{Name: "user", Description: "User to see stats for, leave empty for yourself", Type: ArgumentTypeUser},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			user := m.Author
@@ -65,7 +65,7 @@ var CommonCommands = []*CommandDef{
 		Aliases:      []string{"b"},
 		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
+			&ArgumentDef{Name: "user", Description: "User to battle against", Type: ArgumentTypeUser},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			user := p.Args[0].DiscordUser()
@@ -100,8 +100,8 @@ var CommonCommands = []*CommandDef{
 		Description:  "Increases an attribute",
 		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "attribute", Type: ArgumentTypeString},
-			&ArgumentDef{Name: "amount", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "attribute", Description: "The attribute to upgrade (one of  strength/str, agility/agi, stamina/stam)", Type: ArgumentTypeString},
+			&ArgumentDef{Name: "amount", Description: "The amount to upgrade it by (1 if not specified", Type: ArgumentTypeNumber},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			num := 1
@@ -178,11 +178,11 @@ var CommonCommands = []*CommandDef{
 	},
 	&CommandDef{
 		Name:         "item",
-		Description:  "Shows info about an item",
+		Description:  "Shows info about an item or lists all items if itemid is not specified",
 		Aliases:      []string{"i", "items"},
 		RequiredArgs: 0,
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "itemid", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "itemid", Description: "If itemid is specifed shows detailed info about an item, if not shows all items", Type: ArgumentTypeNumber},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			id := -1
@@ -217,7 +217,7 @@ var CommonCommands = []*CommandDef{
 				}
 				go SendMessage(m.ChannelID, out)
 			} else {
-				out := "**Items**\n"
+				out := "**Items** (see `i {itemid}` for more info about an item\n"
 				for k, item := range itemTypes {
 					eqStr := ""
 
@@ -240,8 +240,8 @@ var CommonCommands = []*CommandDef{
 		Aliases:      []string{"eq"},
 		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "inventoryslot", Type: ArgumentTypeNumber},
-			&ArgumentDef{Name: "equipmentslot", Type: ArgumentTypeString},
+			&ArgumentDef{Name: "inventoryslot", Description: "The inventory slot to equip (see `inventory` to list your inventory)", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "equipmentslot", Description: "Optionally sepcify a specific slot you want it in (one of head, righthand, lefthand, torso, feet, leggings)", Type: ArgumentTypeString},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			invSlot := p.Args[0].Int()
