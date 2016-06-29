@@ -183,8 +183,7 @@ func (b *Battle) Battle() {
 		attacker.Attack()
 		defender.Defend()
 
-		dmg := attacker.Damage() * (rand.Float32() + 0.5) // The damage varies from 50% to 150%
-		b.DealDamage(attacker, defender, dmg, "Basic Attack")
+		b.DealDamage(attacker, defender, attacker.Damage(), "Basic Attack")
 
 		if defender.Health <= 0 {
 			winner = attacker
@@ -226,6 +225,10 @@ func (b *Battle) Battle() {
 }
 
 func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, damage float32, source string) {
+	//origDamage := damage
+	modifier := rand.Float32() + 0.5
+	damage = damage * modifier // The damage varies from 50% to 150%
+
 	if damage >= 0 { // Don't dodge heals
 		// Check if defender dodged
 		dodgeChance := defender.DodgeChance()
@@ -247,8 +250,8 @@ func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, dama
 		damage = -damage
 	}
 
-	b.AppendLog(fmt.Sprintf("**%s** %s **%s** using **%s** and %s **%.2f** Damage! (**%.2f** -> **%.2f**)",
-		attacker.Player.Name, action, defender.Player.Name, source, dealtHealed, damage, originalHealth, defender.Health))
+	b.AppendLog(fmt.Sprintf("**%s** %s **%s** using **%s** and %s **%.2f** (%.2fx) Damage! (**%.2f** -> **%.2f**)",
+		attacker.Player.Name, action, defender.Player.Name, source, dealtHealed, damage, modifier, originalHealth, defender.Health))
 }
 
 func (b *Battle) AppendLog(msg string) {
