@@ -76,9 +76,9 @@ func EquipmentSlotFromString(slot string) EquipmentSlot {
 		return EquipmentSlotNone
 	case "head":
 		return EquipmentSlotHead
-	case "rightHand":
+	case "righthand":
 		return EquipmentSlotRightHand
-	case "leftHand":
+	case "lefthand":
 		return EquipmentSlotLeftHand
 	case "feet":
 		return EquipmentSlotFeet
