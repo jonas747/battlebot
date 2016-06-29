@@ -4,16 +4,18 @@ var itemTypes = []*ItemType{
 	&ItemType{
 		Id:          0,
 		Name:        "Poor mans boots",
-		Description: "Your starting boots",
+		Description: "Simple boots that increase your stamina by 1",
 		Slots:       []EquipmentSlot{EquipmentSlotFeet},
+		Cost:        1,
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeAgility, Val: 5}},
+			Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 1}},
 		},
 	},
 	&ItemType{
 		Id:          1,
 		Name:        "Watermelon",
 		Description: "Increases your stamina by 5",
+		Cost:        10,
 		Slots:       []EquipmentSlot{EquipmentSlotHead},
 		Item: &SimpleItem{
 			Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 5}},
@@ -24,6 +26,7 @@ var itemTypes = []*ItemType{
 		Name:        "Basic Wand",
 		Description: "On attacks there's a 20% chance the wand will shoot flowers and heal your opponent for 10 damage",
 		Slots:       []EquipmentSlot{EquipmentSlotTorso},
+		Cost:        10,
 		Item: &ItemChanceEmitEffect{
 			SimpleItem: SimpleItem{
 				Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 3}},

@@ -16,14 +16,27 @@ type CommandDef struct {
 	RequiredArgs int
 	Arguments    []*ArgumentDef
 	RunFunc      func(cmd *ParsedCommand, m *discordgo.MessageCreate)
+	HideFromHelp bool
 }
 
 func (c *CommandDef) String() string {
-	out := fmt.Sprintf("%s: %s.", c.Name, c.Description)
+	aliasesString := ""
+
+	if len(c.Aliases) > 0 {
+		for k, v := range c.Aliases {
+			if k != 0 {
+				aliasesString += "/"
+			}
+			aliasesString += v
+		}
+		aliasesString = "(" + aliasesString + ")"
+	}
+
+	out := fmt.Sprintf("**%s**%s: %s.", c.Name, aliasesString, c.Description)
 	if len(c.Arguments) > 0 {
 		out += fmt.Sprintf("( %v )", c.Arguments)
 		for _, v := range c.Arguments {
-			out += fmt.Sprintf("\n - %s - %s", v.String(), v.Description)
+			out += fmt.Sprintf("\n     \\* %s - %s", v.String(), v.Description)
 		}
 	}
 	return out

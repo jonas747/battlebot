@@ -110,9 +110,10 @@ func (pm *PlayerManager) GetCreatePlayer(id, name string) *Player {
 
 type Player struct {
 	sync.RWMutex
-	Name string
-	Id   string
-	XP   int
+	Name  string
+	Id    string
+	XP    int
+	Money int
 
 	Wins   int
 	Losses int
@@ -177,8 +178,8 @@ func (p *Player) GetPrettyDiscordStats() string {
 	next := GetXPForLevel(level+1) - GetXPForLevel(level)
 	curXp := p.XP - GetXPForLevel(level)
 
-	general := fmt.Sprintf(" - Level: %d\n - Attribute points: %d\n - XP: %d (%d)\n - Wins: %d\n - Losses: %d",
-		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Wins, p.Losses)
+	general := fmt.Sprintf(" - Level: %d\n - Attribute points: %d\n - XP: %d (%d)\n - Money %d$\n - Wins: %d\n - Losses: %d",
+		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Money, p.Wins, p.Losses)
 
 	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance)",
 		p.Attributes.Get(AttributeStrength), p.Attributes.Get(AttributeStamina), p.Attributes.Get(AttributeAgility))

@@ -66,6 +66,7 @@ var CommonCommands = []*CommandDef{
 		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "user", Description: "User to battle against", Type: ArgumentTypeUser},
+			&ArgumentDef{Name: "money", Description: "Money to battle over, both of you put in this amountand winner gets all", Type: ArgumentTypeNumber},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			user := p.Args[0].DiscordUser()
@@ -74,15 +75,52 @@ var CommonCommands = []*CommandDef{
 				return
 			}
 
+			money := 1
+			if len(p.Args) > 1 && p.Args[1] != nil {
+				money = p.Args[1].Int()
+			}
+
 			attacker := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
 			defender := playerManager.GetCreatePlayer(user.ID, user.Username)
 
-			battle := NewBattle(attacker, defender, m.ChannelID)
+			noMoneyMsg := ""
+			attacker.RLock()
+			if attacker.Money < money {
+				noMoneyMsg = "You"
+			}
+			attacker.RUnlock()
+			defender.RLock()
+			if noMoneyMsg == "" && defender.Money < money {
+				noMoneyMsg = defender.Name
+			}
+			defender.RUnlock()
+
+			if noMoneyMsg != "" {
+				go SendMessage(m.ChannelID, noMoneyMsg+" Does not have enough money to battle :'( Battle some monsters first?")
+				return
+			}
+
+			battle := NewBattle(attacker, defender, money, m.ChannelID)
 			if battleManager.MaybeAddBattle(battle) {
-				go SendMessage(m.ChannelID, fmt.Sprintf("<@%s> Has requested a battle with <@%s>, you got 60 seconds.\nRepond with `@BattleBot accept`", m.Author.ID, user.ID))
+				go SendMessage(m.ChannelID, fmt.Sprintf("<@%s> Has requested a battle with <@%s> for %d$, you got 60 seconds.\nRepond with `@BattleBot accept`", m.Author.ID, user.ID, money))
 			} else {
 				go SendMessage(m.ChannelID, "Did not request battle")
 			}
+		},
+	},
+	&CommandDef{
+		Name:        "battlemonster",
+		Aliases:     []string{"bm"},
+		Description: "Battle a random monster at your level",
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+
+			monster := GetMonster(GetLevelFromXP(player.XP))
+
+			battle := NewBattle(player, monster.Player, monster.Money, m.ChannelID)
+			battle.IsMonster = true
+
+			battle.Battle()
 		},
 	},
 	&CommandDef{
@@ -197,7 +235,7 @@ var CommonCommands = []*CommandDef{
 					return
 				}
 
-				out := fmt.Sprintf("#%d - **%s**\n%s\n", itemType.Id, itemType.Name, itemType.Description)
+				out := fmt.Sprintf("#%d - **%s** - $%d\n%s\n", itemType.Id, itemType.Name, itemType.Cost, itemType.Description)
 				if len(itemType.Slots) > 0 {
 					out += " - Can be equipped as: "
 					for k, slot := range itemType.Slots {
@@ -228,7 +266,7 @@ var CommonCommands = []*CommandDef{
 						eqStr += StringEquipmentSlot(slot)
 					}
 
-					out += fmt.Sprintf("[%d] - %s (%s) - %s\n", k, item.Name, eqStr, item.Description)
+					out += fmt.Sprintf("[%d] - %s (%s) - %d$ - %s\n", k, item.Name, eqStr, item.Cost, item.Description)
 				}
 				go SendMessage(m.ChannelID, out)
 			}
@@ -281,14 +319,19 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:         "give",
-		Description:  "Gives someone an item (admin only)",
+		Name:         "create",
+		Description:  "Creates an item for someone (admin only)",
 		RequiredArgs: 1,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "id", Type: ArgumentTypeNumber},
 			&ArgumentDef{Name: "user", Type: ArgumentTypeUser},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			if m.Author.ID != "105487308693757952" {
+				go SendMessage(m.ChannelID, "You're not an admin >:O")
+				return
+			}
+
 			user := m.Author
 			if len(p.Args) > 1 && p.Args[1] != nil {
 				user = p.Args[1].DiscordUser()
@@ -307,6 +350,78 @@ var CommonCommands = []*CommandDef{
 
 			go SendMessage(m.ChannelID, fmt.Sprintf("Gave **%s** %s (#%d)", player.Name, itemType.Name, itemType.Id))
 			player.Unlock()
+		},
+	},
+	&CommandDef{
+		Name:         "buy",
+		Description:  "Buys an item",
+		RequiredArgs: 1,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "id", Description: "Item you want to buy (see `items/i` for item id's)", Type: ArgumentTypeNumber},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			itemType := GetItemTypeById(p.Args[0].Int())
+
+			if itemType == nil {
+				go SendMessage(m.ChannelID, "Unknown item")
+				return
+			}
+
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			player.Lock()
+
+			if player.Money >= itemType.Cost {
+				player.Inventory = append(player.Inventory, &PlayerItem{Id: itemType.Id})
+				originalMoney := player.Money
+				player.Money -= itemType.Cost
+				go SendMessage(m.ChannelID, fmt.Sprintf("**%s** Purchased: %s (#%d) for %d$ (%d$ -> %d$)", player.Name, itemType.Name, itemType.Id, itemType.Cost, originalMoney, player.Money))
+			} else {
+				go SendMessage(m.ChannelID, "Can't afford that item")
+			}
+
+			player.Unlock()
+		},
+	},
+	&CommandDef{
+		Name:         "give",
+		Description:  "Give someone an item from your inventory",
+		RequiredArgs: 2,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "Inventory slot", Description: "Inventoryslot of the item you're giving away", Type: ArgumentTypeNumber},
+			&ArgumentDef{Name: "Receiver", Description: "Person who's receiving the item", Type: ArgumentTypeUser},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			sender := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+			receiverUser := p.Args[1].DiscordUser()
+			receiver := playerManager.GetCreatePlayer(receiverUser.ID, receiverUser.Username)
+
+			if sender.Id == receiver.Id {
+				go SendMessage(m.ChannelID, "Can't give yourself an item...")
+				return
+			}
+
+			slotIndex := p.Args[0].Int()
+
+			sender.Lock()
+
+			if slotIndex < 0 || slotIndex >= len(sender.Inventory) {
+				go SendMessage(m.ChannelID, "There's no item in that slot")
+				sender.Unlock()
+				return
+			}
+
+			item := sender.Inventory[slotIndex]
+			sender.Inventory = append(sender.Inventory[:slotIndex], sender.Inventory[slotIndex+1:]...)
+			sender.Unlock()
+
+			item.EquipmentSlot = EquipmentSlotNone
+			itemType := GetItemTypeById(item.Id)
+
+			receiver.Lock()
+			receiver.Inventory = append(receiver.Inventory, item)
+			receiver.Unlock()
+
+			go SendMessage(m.ChannelID, fmt.Sprintf("**%s** Gave **%s** %s(#%d)", sender.Name, receiver.Name, itemType.Name, itemType.Id))
 		},
 	},
 }

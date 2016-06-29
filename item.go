@@ -12,6 +12,8 @@ type ItemType struct {
 	Name        string
 	Description string
 
+	Cost int
+
 	// The actual item
 	// Items are not deep copied but simple copied so do not do
 	// modifications to preset slices or maps or pointers

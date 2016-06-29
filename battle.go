@@ -100,20 +100,24 @@ type Battle struct {
 	Finished bool
 	Running  bool
 
+	Money int
+
 	Channel   string
 	Initiator *BattlePlayer
 	Defender  *BattlePlayer
 
-	Log     []string
-	CurTurn int
+	IsMonster bool
+	Log       []string
+	CurTurn   int
 }
 
-func NewBattle(attacker *Player, defender *Player, channel string) *Battle {
+func NewBattle(attacker *Player, defender *Player, money int, channel string) *Battle {
 	return &Battle{
 		Initiator: NewBattlePlayer(attacker),
 		Defender:  NewBattlePlayer(defender),
 		Initiated: time.Now(),
 		Channel:   channel,
+		Money:     money,
 	}
 }
 
@@ -126,6 +130,20 @@ func (b *Battle) Expire(lock bool) {
 	go SendMessage(b.Channel, "<@"+b.Initiator.Player.Id+"> Your battle with"+b.Defender.Player.Id+" Has expired")
 }
 
+func (b *Battle) CheckMoney() bool {
+	if !b.IsMonster {
+		if b.Initiator.Player.Money < b.Money {
+			return false
+		}
+	}
+
+	if b.Defender.Player.Money < b.Money {
+		return false
+	}
+
+	return true
+}
+
 func (b *Battle) Battle() {
 	b.Running = true
 
@@ -134,6 +152,13 @@ func (b *Battle) Battle() {
 
 	b.Defender.Player.Lock()
 	defer b.Defender.Player.Unlock()
+
+	if !b.CheckMoney() {
+		go SendMessage(b.Channel, "Not enough money to battle...")
+		b.Finished = true
+		b.Running = false
+		return
+	}
 
 	var winner *BattlePlayer
 	var loser *BattlePlayer
@@ -173,7 +198,7 @@ func (b *Battle) Battle() {
 	xpRatio := float32(GetLevelFromXP(loser.Player.XP)) / float32(GetLevelFromXP(winner.Player.XP))
 	xpGain := int(xpRatio * 5)
 
-	b.Log = append(b.Log, fmt.Sprintf("**%s** Won against **%s** and earned %d XP! (%.2f vs %.2f)\n", winner.Player.Name, loser.Player.Name, xpGain, winner.Health, loser.Health))
+	b.Log = append(b.Log, fmt.Sprintf("**%s** Won against **%s** and earned %d$ and %d XP! (**%.2f** vs **%.2f**)\n", winner.Player.Name, loser.Player.Name, b.Money, xpGain, winner.Health, loser.Health))
 
 	curLevel := GetLevelFromXP(winner.Player.XP)
 	winner.Player.XP += xpGain
@@ -190,6 +215,11 @@ func (b *Battle) Battle() {
 	go SendMessage(b.Channel, out)
 	b.Finished = true
 	b.Running = false
+
+	winner.Player.Money += b.Money
+	if !b.IsMonster {
+		loser.Player.Money -= b.Money
+	}
 
 	winner.Player.Wins++
 	loser.Player.Losses++
