@@ -179,39 +179,59 @@ var CommonCommands = []*CommandDef{
 	&CommandDef{
 		Name:         "item",
 		Description:  "Shows info about an item",
-		Aliases:      []string{"i"},
-		RequiredArgs: 1,
+		Aliases:      []string{"i", "items"},
+		RequiredArgs: 0,
 		Arguments: []*ArgumentDef{
 			&ArgumentDef{Name: "itemid", Type: ArgumentTypeNumber},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			id := p.Args[0].Int()
-
-			itemType := GetItemTypeById(id)
-			if itemType == nil {
-				go SendMessage(m.ChannelID, "Unknown item")
-				return
+			id := -1
+			if len(p.Args) > 0 && p.Args[0] != nil {
+				id = p.Args[0].Int()
 			}
 
-			out := fmt.Sprintf("#%d - **%s**\n%s\n", itemType.Id, itemType.Name, itemType.Description)
-			if len(itemType.Slots) > 0 {
-				out += " - Can be equipped as: "
-				for k, slot := range itemType.Slots {
-					if k != 0 {
-						out += ", "
+			if id > -1 {
+				itemType := GetItemTypeById(id)
+				if itemType == nil {
+					go SendMessage(m.ChannelID, "Unknown item")
+					return
+				}
+
+				out := fmt.Sprintf("#%d - **%s**\n%s\n", itemType.Id, itemType.Name, itemType.Description)
+				if len(itemType.Slots) > 0 {
+					out += " - Can be equipped as: "
+					for k, slot := range itemType.Slots {
+						if k != 0 {
+							out += ", "
+						}
+						out += StringEquipmentSlot(slot)
 					}
-					out += StringEquipmentSlot(slot)
+					out += "\n"
 				}
-				out += "\n"
-			}
-			pasiveEffects := itemType.Item.GetStaticAttributes()
-			if len(pasiveEffects) > 0 {
-				out += "\nPassive attributes:\n"
-				for _, effect := range pasiveEffects {
-					out += fmt.Sprintf(" - %s: %d", StringAttributeType(effect.Type), effect.Val)
+				pasiveEffects := itemType.Item.GetStaticAttributes()
+				if len(pasiveEffects) > 0 {
+					out += "\nPassive attributes:\n"
+					for _, effect := range pasiveEffects {
+						out += fmt.Sprintf(" - %s: %d", StringAttributeType(effect.Type), effect.Val)
+					}
 				}
+				go SendMessage(m.ChannelID, out)
+			} else {
+				out := "**Items**\n"
+				for k, item := range itemTypes {
+					eqStr := ""
+
+					for i, slot := range item.Slots {
+						if i != 0 {
+							eqStr += ", "
+						}
+						eqStr += StringEquipmentSlot(slot)
+					}
+
+					out += fmt.Sprintf("[%d] - %s (%s) - %s\n", k, item.Name, eqStr, item.Description)
+				}
+				go SendMessage(m.ChannelID, out)
 			}
-			go SendMessage(m.ChannelID, out)
 		},
 	},
 	&CommandDef{

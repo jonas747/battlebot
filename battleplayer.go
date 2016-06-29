@@ -52,6 +52,12 @@ func (p *BattlePlayer) Attack() {
 	}
 }
 
+func (p *BattlePlayer) Defend() {
+	for _, v := range p.EquippedItems {
+		v.OnDefend()
+	}
+}
+
 func (p *BattlePlayer) GetCombinedAttribute(a AttributeType) int {
 	return p.Player.Attributes.Get(a) + p.Attributes.Get(a)
 }

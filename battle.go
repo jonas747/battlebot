@@ -155,10 +155,11 @@ func (b *Battle) Battle() {
 		attacker.NextTurn()
 		defender.NextTurn()
 
-		dmg := attacker.Damage() * (rand.Float32() + 0.5) // The damage varies from 50% to 150%
-
-		b.DealDamage(attacker, defender, dmg, "Basic Attack")
 		attacker.Attack()
+		defender.Defend()
+
+		dmg := attacker.Damage() * (rand.Float32() + 0.5) // The damage varies from 50% to 150%
+		b.DealDamage(attacker, defender, dmg, "Basic Attack")
 
 		if defender.Health <= 0 {
 			winner = attacker

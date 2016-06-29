@@ -13,20 +13,20 @@ var itemTypes = []*ItemType{
 	&ItemType{
 		Id:          1,
 		Name:        "Watermelon",
-		Description: "Cause why not",
+		Description: "Increases your stamina by 5",
 		Slots:       []EquipmentSlot{EquipmentSlotHead},
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 5}},
+			Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 5}},
 		},
 	},
 	&ItemType{
 		Id:          2,
 		Name:        "Basic Wand",
-		Description: "On attacks there's a 20% chance the wand will shoot flowers and heal your opponent for 5 damage",
+		Description: "On attacks there's a 20% chance the wand will shoot flowers and heal your opponent for 10 damage",
 		Slots:       []EquipmentSlot{EquipmentSlotTorso},
 		Item: &ItemChanceEmitEffect{
 			SimpleItem: SimpleItem{
-				Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 5}},
+				Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 3}},
 			},
 			Triggers: []*EffectTriggerChance{
 				&EffectTriggerChance{
