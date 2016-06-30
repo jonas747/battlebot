@@ -241,16 +241,16 @@ func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, dama
 	originalHealth := defender.Health
 	defender.Health -= damage
 
-	action := "Attacked"
+	action := ":crossed_swords:"
 	dealtHealed := "dealt"
 
 	if damage < 0 {
-		action = "Healed"
+		action = "💓"
 		dealtHealed = "healed"
 		damage = -damage
 	}
 
-	b.AppendLog(fmt.Sprintf("**%s** %s **%s** using **%s** and %s **%.2f** (%.2fx) Damage! (**%.2f** -> **%.2f**)",
+	b.AppendLog(fmt.Sprintf("**%s** %s **%s** using **%s** and %s **%.1f** (%.2f:game_die:) (**%.1f** -> **%.1f:hearts:**)",
 		attacker.Player.Name, action, defender.Player.Name, source, dealtHealed, damage, modifier, originalHealth, defender.Health))
 }
 

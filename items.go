@@ -53,7 +53,7 @@ var itemTypes = []*ItemType{
 			},
 			Triggers: []*EffectTriggerChance{
 				&EffectTriggerChance{
-					Chance:  0.2,
+					Chance:  1,
 					Target:  TargetSelf,
 					Trigger: EffectTriggerTurn,
 					Apply: func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle) {
