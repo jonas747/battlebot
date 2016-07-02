@@ -227,7 +227,7 @@ func (b *Battle) Turn(attacker, defender *BattlePlayer) {
 	defender.NextTurn()
 
 	if attacker.StunDuration > 0 {
-		b.AppendLog(fmt.Sprintf("**%s** Is stunned for another %d turn(s)", attacker.Player.Name, attacker.StunDuration))
+		b.AppendLog(fmt.Sprintf("**%s** :zzz: (%d turn(s) left)", attacker.Player.Name, attacker.StunDuration))
 		return
 	}
 
