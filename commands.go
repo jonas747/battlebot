@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -301,6 +302,61 @@ var CommonCommands = []*CommandDef{
 				go SendMessage(m.ChannelID, fmt.Sprintf("Equipped %s in %s", itemType.Name, StringEquipmentSlot(equipmentSlot)))
 			}
 			player.Unlock()
+		},
+	},
+	&CommandDef{
+		Name:         "UnEquip",
+		Description:  "Unequips an item from your inventory",
+		Aliases:      []string{"ueq", "ue", "deq", "dequip"},
+		RequiredArgs: 1,
+		Arguments: []*ArgumentDef{
+			&ArgumentDef{Name: "Inventory or Equipment Slot", Description: "Either a inventory slot (number)  or Equipment slot (one of head, righthand, lefthand, torso, feet, leggings)", Type: ArgumentTypeString},
+		},
+		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
+			val := p.Args[0].Str()
+
+			player := playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
+
+			var itemType *ItemType
+
+			// Check if its a number
+			num, err := strconv.ParseInt(val, 10, 32)
+
+			player.Lock()
+			if err != nil {
+				// An inventory slot
+				invSlot := int(num)
+				if invSlot >= len(player.Inventory) || invSlot < 0 {
+					go SendMessage(m.ChannelID, "That inventory slot dosen't exist, see the inventory command for more info")
+					player.Unlock()
+					return
+				}
+				itemType = GetItemTypeById(player.Inventory[invSlot].Id)
+
+				player.Inventory[invSlot].EquipmentSlot = EquipmentSlotNone
+			} else {
+				// An equipment slot
+				equipmentSlot := EquipmentSlotFromString(val)
+				if equipmentSlot == EquipmentSlotNone {
+					go SendMessage(m.ChannelID, "Unknown equipment slot")
+					player.Unlock()
+					return
+				}
+				for _, v := range player.Inventory {
+					if v.EquipmentSlot == equipmentSlot {
+						v.EquipmentSlot = EquipmentSlotNone
+						itemType = GetItemTypeById(v.Id)
+						break
+					}
+				}
+			}
+			player.Unlock()
+
+			if itemType == nil {
+				go SendMessage(m.ChannelID, "Didn't strip...")
+			} else {
+				go SendMessage(m.ChannelID, fmt.Sprintf("Unequipped %s", itemType.Name))
+			}
 		},
 	},
 	&CommandDef{
