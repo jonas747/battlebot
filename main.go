@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
-	"github.com/jonas747/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"log"
 	"runtime/debug"
 	"strings"

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/jonas747/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"io/ioutil"
 	"log"
 	"os"
