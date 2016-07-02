@@ -54,6 +54,10 @@ func (p *BattlePlayer) MaxHealth() float32 {
 }
 
 func (p *BattlePlayer) NextTurn() {
+	if p.StunDuration > 0 {
+		p.StunDuration--
+	}
+
 	for _, v := range p.EquippedItems {
 		v.OnTurn()
 	}
@@ -97,6 +101,21 @@ func (p *BattlePlayer) Damage() float32 {
 
 func (p *BattlePlayer) MissChance() float32 {
 	return GetMissChance(float32(p.GetCombinedAttribute(AttributeAgility)) + p.ModifiedMissChance)
+}
+
+func (p *BattlePlayer) ApplyItemAttribute(attrib ItemAttributeType, val float32) {
+	switch attrib {
+	case ItemAttributeStrength:
+		p.Attributes.Modify(AttributeStrength, int(val))
+	case ItemAttributeAgility:
+		p.Attributes.Modify(AttributeAgility, int(val))
+	case ItemAttributeStamina:
+		p.Attributes.Modify(AttributeStamina, int(val))
+	case ItemAttributeDodgeChance:
+		p.ModifiedDodgeChance += val
+	case ItemAttributeMissChance:
+		p.ModifiedMissChance += val
+	}
 }
 
 func GetDodgeChance(agility float32) float32 {

@@ -8,7 +8,7 @@ const (
 	AttributeAgility
 )
 
-func StringAttributeType(a AttributeType) string {
+func (a AttributeType) String() string {
 	switch a {
 	case AttributeStrength:
 		return "Strength"

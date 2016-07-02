@@ -164,7 +164,7 @@ var CommonCommands = []*CommandDef{
 
 			player.Attributes.Modify(attribute, num)
 
-			msg := fmt.Sprintf("Increased %s by %d\n\nCurrent stats:\n%s", StringAttributeType(attribute), num, player.GetPrettyDiscordStats())
+			msg := fmt.Sprintf("Increased %s by %d\n\nCurrent stats:\n%s", attribute.String(), num, player.GetPrettyDiscordStats())
 
 			go SendMessage(m.ChannelID, msg)
 		},
@@ -237,7 +237,7 @@ var CommonCommands = []*CommandDef{
 				if len(pasiveEffects) > 0 {
 					out += "\nPassive attributes:\n"
 					for _, effect := range pasiveEffects {
-						out += fmt.Sprintf(" - %s: %d", StringAttributeType(effect.Type), effect.Val)
+						out += fmt.Sprintf(" - %s: %.2f", effect.Type.String(), effect.Amount)
 					}
 				}
 				go SendMessage(m.ChannelID, out)

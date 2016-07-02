@@ -226,6 +226,11 @@ func (b *Battle) Turn(attacker, defender *BattlePlayer) {
 	attacker.NextTurn()
 	defender.NextTurn()
 
+	if attacker.StunDuration > 0 {
+		b.AppendLog(fmt.Sprintf("**%s** Is stunned for another %d turn(s)", attacker.Player.Name, attacker.StunDuration))
+		return
+	}
+
 	attacker.Attack()
 	defender.Defend()
 
@@ -268,6 +273,11 @@ func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, dama
 
 	b.AppendLog(fmt.Sprintf("**%s** %s **%s** using **%s** and %s **%.1f** (%.2f:game_die:) (**%.1f** -> **%.1f:hearts:**)",
 		attacker.Player.Name, action, defender.Player.Name, source, dealtHealed, damage, modifier, originalHealth, defender.Health))
+}
+
+func (b *Battle) Stun(attacker, defender *BattlePlayer, duration int, source string) {
+	defender.StunDuration += duration
+	b.AppendLog(fmt.Sprintf("**%s** Stunned **%s** for %d turn(s) using %s", attacker.Player.Name, defender.Player.Name, duration, source))
 }
 
 func (b *Battle) AppendLog(msg string) {

@@ -8,7 +8,7 @@ var itemTypes = []*ItemType{
 		Slots:       []EquipmentSlot{EquipmentSlotFeet},
 		Cost:        1,
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 1}},
+			Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeStamina, Amount: 1}},
 		},
 	},
 	&ItemType{
@@ -18,7 +18,7 @@ var itemTypes = []*ItemType{
 		Cost:        10,
 		Slots:       []EquipmentSlot{EquipmentSlotHead},
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 5}},
+			Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeStamina, Amount: 5}},
 		},
 	},
 	&ItemType{
@@ -28,7 +28,7 @@ var itemTypes = []*ItemType{
 		Cost:        10,
 		Slots:       []EquipmentSlot{EquipmentSlotRightHand, EquipmentSlotLeftHand},
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 5}},
+			Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeStrength, Amount: 5}},
 		},
 	},
 	&ItemType{
@@ -38,7 +38,7 @@ var itemTypes = []*ItemType{
 		Cost:        10,
 		Slots:       []EquipmentSlot{EquipmentSlotFeet},
 		Item: &SimpleItem{
-			Attributes: []Attribute{Attribute{Type: AttributeAgility, Val: 5}},
+			Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeAgility, Amount: 5}},
 		},
 	},
 	&ItemType{
@@ -49,11 +49,10 @@ var itemTypes = []*ItemType{
 		Cost:        10,
 		Item: &ItemEffectEmitter{
 			SimpleItem: SimpleItem{
-				Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 2}},
+				Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeStamina, Amount: 2}},
 			},
 			Triggers: []*EffectTrigger{
 				&EffectTrigger{
-					Chance:  1,
 					Target:  TargetSelf,
 					Trigger: EffectTriggerTurn,
 					Apply: func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle) {
@@ -69,21 +68,51 @@ var itemTypes = []*ItemType{
 		Id:          5,
 		Name:        "Basic Wand",
 		Description: "On attacks there's a 20% chance the wand will shoot flowers and heal your opponent for 10 damage",
-		Slots:       []EquipmentSlot{EquipmentSlotTorso},
+		Slots:       []EquipmentSlot{EquipmentSlotLeftHand, EquipmentSlotRightHand},
 		Cost:        10,
 		Item: &ItemEffectEmitter{
 			SimpleItem: SimpleItem{
-				Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 5}},
+				Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeStrength, Amount: 5}},
 			},
 			Triggers: []*EffectTrigger{
 				&EffectTrigger{
-					Chance: 0.2,
-					Target: TargetOpponent,
+					Chance:  0.2,
+					Target:  TargetOpponent,
+					Trigger: EffectTriggerAttack,
 					Apply: func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle) {
 						battle.DealDamage(sender, receiver, -10, "Flowers")
 					},
 				},
 			},
+		},
+	},
+	&ItemType{
+		Id:          6,
+		Name:        "Paper airplane",
+		Description: "20%% Chance you stun the enemy for 4 turns on attack",
+		Slots:       []EquipmentSlot{EquipmentSlotRightHand, EquipmentSlotLeftHand},
+		Cost:        20,
+		Item: &ItemEffectEmitter{
+			Triggers: []*EffectTrigger{
+				&EffectTrigger{
+					Chance:  0.2,
+					Target:  TargetOpponent,
+					Trigger: EffectTriggerAttack,
+					Apply: func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle) {
+						battle.Stun(sender, receiver, 4, "Paper airplane")
+					},
+				},
+			},
+		},
+	},
+	&ItemType{
+		Id:          7,
+		Name:        "War Paint",
+		Description: "Increases your foucs, your miss chance is decreased by 10%",
+		Slots:       []EquipmentSlot{EquipmentSlotRightHand, EquipmentSlotLeftHand, EquipmentSlotHead, EquipmentSlotFeet, EquipmentSlotLeggings, EquipmentSlotTorso},
+		Cost:        10,
+		Item: &SimpleItem{
+			Attributes: []ItemAttribute{ItemAttribute{Type: ItemAttributeMissChance, Amount: -10}},
 		},
 	},
 }

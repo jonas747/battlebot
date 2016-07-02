@@ -12,7 +12,9 @@ type ItemType struct {
 	Name        string
 	Description string
 
-	Cost int
+	Cost    int
+	CanBuy  bool
+	CanSell bool
 
 	// The actual item
 	// Items are not deep copied but simple copied so do not do
@@ -28,7 +30,7 @@ type Item interface {
 	Effect
 
 	// Passive attribute bonuses
-	GetStaticAttributes() []Attribute
+	GetStaticAttributes() []ItemAttribute
 
 	// Returns a copy to be used and is goroutine safe
 	GetCopy() Item
@@ -111,10 +113,41 @@ type EquippedItem struct {
 // Simple item that implements the Item interface
 // Provides only static attributes
 type SimpleItem struct {
-	Attributes []Attribute
+	Attributes []ItemAttribute
 	Player     *BattlePlayer
 	Opponent   *BattlePlayer
 	Battle     *Battle
+}
+
+type ItemAttributeType int
+
+const (
+	ItemAttributeStrength ItemAttributeType = iota
+	ItemAttributeAgility
+	ItemAttributeStamina
+	ItemAttributeDodgeChance
+	ItemAttributeMissChance
+)
+
+func (i ItemAttributeType) String() string {
+	switch i {
+	case ItemAttributeStrength:
+		return "Strength"
+	case ItemAttributeAgility:
+		return "Agility"
+	case ItemAttributeStamina:
+		return "Stamina"
+	case ItemAttributeDodgeChance:
+		return "DodgeChance"
+	case ItemAttributeMissChance:
+		return "MissChance"
+	}
+	return "Unknown"
+}
+
+type ItemAttribute struct {
+	Type   ItemAttributeType
+	Amount float32
 }
 
 func (s *SimpleItem) Init(wearer *BattlePlayer, opponent *BattlePlayer, battle *Battle) {
@@ -123,20 +156,20 @@ func (s *SimpleItem) Init(wearer *BattlePlayer, opponent *BattlePlayer, battle *
 	s.Battle = battle
 }
 
-func (s *SimpleItem) GetStaticAttributes() []Attribute {
+func (s *SimpleItem) GetStaticAttributes() []ItemAttribute {
 	return s.Attributes
 }
 
 func (s *SimpleItem) Apply() {
 	for _, attrib := range s.Attributes {
-		s.Player.Attributes.Modify(attrib.Type, attrib.Val)
+		s.Player.ApplyItemAttribute(attrib.Type, attrib.Amount)
 	}
 }
 
 func (s *SimpleItem) Remove() {
 	for _, attrib := range s.Attributes {
 		// Undo the change
-		s.Player.Attributes.Modify(attrib.Type, -attrib.Val)
+		s.Player.ApplyItemAttribute(attrib.Type, -attrib.Amount)
 	}
 }
 
