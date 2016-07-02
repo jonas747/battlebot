@@ -166,11 +166,15 @@ func (p *Player) AvailableAttributePoints() int {
 }
 
 func (p *Player) BaseDodgeChange() float32 {
-	return GetDodgeChance(float32(p.Attributes.Get(AttributeAgility)))
+	return GetDodgeChance(float32(GetLevelFromXP(p.XP) + p.Attributes.Get(AttributeAgility)))
 }
 
 func (p *Player) BaseDamage() float32 {
 	return float32(GetLevelFromXP(p.XP)+p.Attributes.Get(AttributeStrength)) + 2
+}
+
+func (p *Player) BaseMissChance() float32 {
+	return GetMissChance(float32(GetLevelFromXP(p.XP) + p.Attributes.Get(AttributeAgility)))
 }
 
 func (p *Player) GetPrettyDiscordStats() string {
@@ -181,10 +185,10 @@ func (p *Player) GetPrettyDiscordStats() string {
 	general := fmt.Sprintf(" - Level: %d\n - Attribute points: %d\n - XP: %d (%d)\n - Money %d$\n - Wins: %d\n - Losses: %d",
 		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Money, p.Wins, p.Losses)
 
-	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance)",
+	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance, decreases miss chance)",
 		p.Attributes.Get(AttributeStrength), p.Attributes.Get(AttributeStamina), p.Attributes.Get(AttributeAgility))
 
-	stats := fmt.Sprintf(" - Health: %d\n - Damage %.2f\n - Dodge Chance: %.2f%%", p.MaxHealth(), p.BaseDamage(), p.BaseDodgeChange())
+	stats := fmt.Sprintf(" - Health: %d\n - Damage %.2f\n - Dodge Chance: %.2f%%\n - Miss Chance: %.2f%%", p.MaxHealth(), p.BaseDamage(), p.BaseDodgeChange(), p.BaseMissChance())
 
 	return general + "\n\n" + attributes + "\n\n" + stats
 }

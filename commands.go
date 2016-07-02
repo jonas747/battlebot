@@ -33,7 +33,7 @@ var CommonCommands = []*CommandDef{
 
 			player.RLock()
 
-			out := "**Stats**\n" + player.GetPrettyDiscordStats()
+			out := "**Stats** *excluding attributes from items*\n" + player.GetPrettyDiscordStats()
 
 			player.RUnlock()
 			go SendMessage(m.ChannelID, out)

@@ -177,13 +177,7 @@ func (b *Battle) Battle() {
 			defender = b.Initiator
 		}
 
-		attacker.NextTurn()
-		defender.NextTurn()
-
-		attacker.Attack()
-		defender.Defend()
-
-		b.DealDamage(attacker, defender, attacker.Damage(), "Basic Attack")
+		b.Turn(attacker, defender)
 
 		if defender.Health <= 0 {
 			winner = attacker
@@ -192,8 +186,12 @@ func (b *Battle) Battle() {
 		}
 
 		attackersTurn = !attackersTurn
-	}
 
+	}
+	b.End(winner, loser)
+}
+
+func (b *Battle) End(winner, loser *BattlePlayer) {
 	xpRatio := float32(GetLevelFromXP(loser.Player.XP)) / float32(GetLevelFromXP(winner.Player.XP))
 	xpGain := int(xpRatio * 5)
 
@@ -224,18 +222,36 @@ func (b *Battle) Battle() {
 	loser.Player.Losses++
 }
 
+func (b *Battle) Turn(attacker, defender *BattlePlayer) {
+	attacker.NextTurn()
+	defender.NextTurn()
+
+	attacker.Attack()
+	defender.Defend()
+
+	b.DealDamage(attacker, defender, attacker.Damage(), "Basic Attack")
+}
+
 func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, damage float32, source string) {
 	//origDamage := damage
 	modifier := rand.Float32() + 0.5
 	damage = damage * modifier // The damage varies from 50% to 150%
 
-	if damage >= 0 { // Don't dodge heals
+	if damage >= 0 { // Don't dodge/miss heals
+		// Check if attacker missed
+		missChance := attacker.MissChance()
+		if rand.Intn(100) < int(missChance) {
+			b.AppendLog(fmt.Sprintf("**%s** Missed **%s** with %s", attacker.Player.Name, defender.Player.Name, source))
+			return
+		}
+
 		// Check if defender dodged
 		dodgeChance := defender.DodgeChance()
 		if rand.Intn(100) < int(dodgeChance) {
 			b.AppendLog(fmt.Sprintf("**%s** Dodged **%s**'s %s", defender.Player.Name, attacker.Player.Name, source))
 			return
 		}
+
 	}
 
 	originalHealth := defender.Health
