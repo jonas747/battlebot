@@ -130,7 +130,7 @@ var CommonCommands = []*CommandDef{
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
 			num := 1
-			if len(p.Args) > 1 {
+			if len(p.Args) > 1 && p.Args[1] != nil {
 				num = p.Args[1].Int()
 			}
 			if num < 1 {
