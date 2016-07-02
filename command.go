@@ -98,6 +98,11 @@ func (p *ParsedArgument) DiscordUser() *discordgo.User {
 	return val
 }
 
+func (p *ParsedArgument) GetCreatePlayer() *Player {
+	user := p.DiscordUser()
+	return playerManager.GetCreatePlayer(user.ID, user.Username)
+}
+
 type ParsedCommand struct {
 	Name string
 	Cmd  *CommandDef

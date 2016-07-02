@@ -21,15 +21,16 @@ var CommonCommands = []*CommandDef{
 		Aliases:     []string{"s"},
 		Description: "Shows stats for a user",
 		Arguments: []*ArgumentDef{
-			&ArgumentDef{Name: "user", Description: "User to see stats for, leave empty for yourself", Type: ArgumentTypeUser},
+			&ArgumentDef{Name: "User", Description: "User to see stats for, leave empty for yourself", Type: ArgumentTypeUser},
 		},
 		RunFunc: func(p *ParsedCommand, m *discordgo.MessageCreate) {
-			user := m.Author
+			var player *Player
 			if len(p.Args) > 0 && p.Args[0] != nil {
-				user = p.Args[0].DiscordUser()
+				player = p.Args[0].GetCreatePlayer()
+			} else {
+				player = playerManager.GetCreatePlayer(m.Author.ID, m.Author.Username)
 			}
 
-			player := playerManager.GetCreatePlayer(user.ID, user.Username)
 			player.RLock()
 
 			out := "**Stats**\n" + player.GetPrettyDiscordStats()
@@ -323,7 +324,7 @@ var CommonCommands = []*CommandDef{
 			num, err := strconv.ParseInt(val, 10, 32)
 
 			player.Lock()
-			if err != nil {
+			if err == nil {
 				// An inventory slot
 				invSlot := int(num)
 				if invSlot >= len(player.Inventory) || invSlot < 0 {
