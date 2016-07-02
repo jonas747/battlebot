@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	VERSION = "BattleBot 0.0.1 Alpha"
+	VERSION = "BattleBot 0.0.2 Alpha"
 )
 
 var (
