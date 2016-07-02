@@ -156,29 +156,31 @@ const (
 	TargetOpponent
 )
 
-type EffectTrigger int
+type EffectTriggerType int
 
 const (
-	EffectTriggerTurn EffectTrigger = iota
+	EffectTriggerTurn EffectTriggerType = iota
 	EffectTriggerAttack
 	EffectTriggerDefend
 )
 
-type EffectTriggerChance struct {
+type EffectTrigger struct {
 	Chance   float32
 	Target   Target
-	Trigger  EffectTrigger
+	Trigger  EffectTriggerType
 	Apply    func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle)
 	OnlyOnce bool
 }
 
-func (e *EffectTriggerChance) MaybeTrigger(parent *ItemChanceEmitEffect) bool {
+func (e *EffectTrigger) MaybeTrigger(parent *ItemEffectEmitter) bool {
 	if e.Apply == nil {
 		return false
 	}
-	rng := rand.Float32()
-	if rng > e.Chance {
-		return false
+	if e.Chance != 0 {
+		rng := rand.Float32()
+		if rng > e.Chance {
+			return false
+		}
 	}
 
 	if e.Target == TargetSelf {
@@ -190,27 +192,27 @@ func (e *EffectTriggerChance) MaybeTrigger(parent *ItemChanceEmitEffect) bool {
 }
 
 // Similar to simpleitem but also gives a n% chance of an effect to be given to the opponent or defender on an event
-type ItemChanceEmitEffect struct {
+type ItemEffectEmitter struct {
 	SimpleItem
 
-	Triggers []*EffectTriggerChance
+	Triggers []*EffectTrigger
 
 	triggeredEffects []int
 }
 
-func (item *ItemChanceEmitEffect) OnTurn()   { item.handleTrigger(EffectTriggerTurn) }
-func (item *ItemChanceEmitEffect) OnAttack() { item.handleTrigger(EffectTriggerAttack) }
-func (item *ItemChanceEmitEffect) OnDefend() { item.handleTrigger(EffectTriggerDefend) }
-func (item *ItemChanceEmitEffect) GetCopy() Item {
+func (item *ItemEffectEmitter) OnTurn()   { item.handleTrigger(EffectTriggerTurn) }
+func (item *ItemEffectEmitter) OnAttack() { item.handleTrigger(EffectTriggerAttack) }
+func (item *ItemEffectEmitter) OnDefend() { item.handleTrigger(EffectTriggerDefend) }
+func (item *ItemEffectEmitter) GetCopy() Item {
 	temp := *item
 	return &temp
 }
 
-func (item *ItemChanceEmitEffect) handleTrigger(trigger EffectTrigger) {
+func (item *ItemEffectEmitter) handleTrigger(triggerType EffectTriggerType) {
 
 OUTER:
 	for i, triggerListener := range item.Triggers {
-		if triggerListener.Trigger != trigger {
+		if triggerListener.Trigger != triggerType {
 			continue
 		}
 

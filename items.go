@@ -47,12 +47,12 @@ var itemTypes = []*ItemType{
 		Description: "Every turn you heal 2 damage",
 		Slots:       []EquipmentSlot{EquipmentSlotTorso},
 		Cost:        10,
-		Item: &ItemChanceEmitEffect{
+		Item: &ItemEffectEmitter{
 			SimpleItem: SimpleItem{
 				Attributes: []Attribute{Attribute{Type: AttributeStamina, Val: 2}},
 			},
-			Triggers: []*EffectTriggerChance{
-				&EffectTriggerChance{
+			Triggers: []*EffectTrigger{
+				&EffectTrigger{
 					Chance:  1,
 					Target:  TargetSelf,
 					Trigger: EffectTriggerTurn,
@@ -71,12 +71,12 @@ var itemTypes = []*ItemType{
 		Description: "On attacks there's a 20% chance the wand will shoot flowers and heal your opponent for 10 damage",
 		Slots:       []EquipmentSlot{EquipmentSlotTorso},
 		Cost:        10,
-		Item: &ItemChanceEmitEffect{
+		Item: &ItemEffectEmitter{
 			SimpleItem: SimpleItem{
 				Attributes: []Attribute{Attribute{Type: AttributeStrength, Val: 5}},
 			},
-			Triggers: []*EffectTriggerChance{
-				&EffectTriggerChance{
+			Triggers: []*EffectTrigger{
+				&EffectTrigger{
 					Chance: 0.2,
 					Target: TargetOpponent,
 					Apply: func(sender *BattlePlayer, receiver *BattlePlayer, battle *Battle) {
