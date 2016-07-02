@@ -12,7 +12,7 @@ type MonsterModifier int
 
 const (
 	MonsterModifierNormal MonsterModifier = 1
-	MonsterModifierThough                 = 2
+	MonsterModifierTough                  = 2
 	MonsterModifierBoss                   = 5
 )
 
@@ -21,8 +21,8 @@ func (mm MonsterModifier) String() string {
 
 	case MonsterModifierNormal:
 		return "Normal"
-	case MonsterModifierThough:
-		return "Though"
+	case MonsterModifierTough:
+		return "Tough"
 	case MonsterModifierBoss:
 		return "Boss"
 	}
@@ -128,7 +128,7 @@ func RandomMonsterModifier() MonsterModifier {
 	if num < 0.6 {
 		return MonsterModifierNormal
 	} else if num < 0.9 {
-		return MonsterModifierThough
+		return MonsterModifierTough
 	} else {
 		return MonsterModifierBoss
 	}
