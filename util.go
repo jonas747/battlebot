@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/jonas747/dutil"
 	"io"
 	"log"
 	"os"
-	"strings"
-	"unicode/utf8"
 )
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are
@@ -69,31 +68,10 @@ func copyFileContents(src, dst string) (err error) {
 	return
 }
 
-// Simple wrapper that resends and splits up at newlines if it failed
+// Simple wrapper for convenience
 func SendMessage(channel, msg string) {
-	// Possibly split up message
-	sendAfter := ""
-
-	if utf8.RuneCountInString(msg) > 2000 {
-		firstPart := msg[:2000]
-
-		// Split at newline if possible
-		lastIndex := strings.LastIndex(firstPart, "\n")
-		if lastIndex == -1 {
-			lastIndex = 2000
-		}
-
-		sendAfter = msg[lastIndex:]
-		msg = msg[:lastIndex]
-	}
-
-	_, err := dgo.ChannelMessageSend(channel, msg)
+	_, err := dutil.SplitSendMessage(dgo, channel, msg)
 	if err != nil {
-		log.Println("Error sending message", err)
-	}
-
-	// Send the next part if multipart
-	if sendAfter != "" {
-		SendMessage(channel, sendAfter)
+		log.Println("Error sending message(s):", err)
 	}
 }

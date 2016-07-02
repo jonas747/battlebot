@@ -305,7 +305,7 @@ var CommonCommands = []*CommandDef{
 		},
 	},
 	&CommandDef{
-		Name:         "UnEquip",
+		Name:         "unequip",
 		Description:  "Unequips an item from your inventory",
 		Aliases:      []string{"ueq", "ue", "deq", "dequip"},
 		RequiredArgs: 1,
