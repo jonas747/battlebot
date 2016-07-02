@@ -95,18 +95,20 @@ func (bm *BattleManager) CheckBattles() {
 type Battle struct {
 	sync.RWMutex
 
-	Initiated time.Time
+	Initiated time.Time // The time the battle was initiated
 
-	Finished bool
-	Running  bool
+	Finished bool // True if finished
+	Running  bool // True if currently running
 
-	Money int
+	Money int // The Money in the pot (well half)
 
-	Channel   string
-	Initiator *BattlePlayer
-	Defender  *BattlePlayer
+	Channel   string        // Channel stuff gets sent to in discord
+	Initiator *BattlePlayer // Attacker
+	Defender  *BattlePlayer // Defender
 
-	IsMonster bool
+	SkipNextAttack bool // Set to true to skip the next attack, gets reset after every turn
+
+	IsMonster bool // True if fighitng a monster
 	Log       []string
 	CurTurn   int
 }
@@ -234,7 +236,12 @@ func (b *Battle) Turn(attacker, defender *BattlePlayer) {
 	attacker.Attack()
 	defender.Defend()
 
-	b.DealDamage(attacker, defender, attacker.Damage(), "Basic Attack")
+	if !b.SkipNextAttack {
+		b.DealDamage(attacker, defender, attacker.Damage(), "Basic Attack")
+	}
+
+	b.SkipNextAttack = false
+
 }
 
 func (b *Battle) DealDamage(attacker *BattlePlayer, defender *BattlePlayer, damage float32, source string) {
