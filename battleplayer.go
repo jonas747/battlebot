@@ -100,7 +100,7 @@ func (p *BattlePlayer) Damage() float32 {
 }
 
 func (p *BattlePlayer) MissChance() float32 {
-	return GetMissChance(float32(p.GetCombinedAttribute(AttributeAgility)) + p.ModifiedMissChance)
+	return GetMissChance(float32(p.GetCombinedAttribute(AttributeAgility))) + p.ModifiedMissChance
 }
 
 func (p *BattlePlayer) ApplyItemAttribute(attrib ItemAttributeType, val float32) {

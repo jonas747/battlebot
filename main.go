@@ -5,22 +5,26 @@ import (
 	"flag"
 	"github.com/bwmarrin/discordgo"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"runtime/debug"
 	"strings"
 )
 
 const (
-	VERSION = "BattleBot 0.0.2 Alpha"
+	VERSION = "BattleBot 0.0.3 Alpha"
 )
 
 var (
 	flagToken string
+	flagDebug bool
 	dgo       *discordgo.Session
 	commands  []*CommandDef
 )
 
 func init() {
 	flag.StringVar(&flagToken, "t", "", "Token to use")
+	flag.BoolVar(&flagDebug, "d", false, "Set to turn on debug info, such as pprof http server")
 	flag.Parse()
 
 	commands = CommonCommands
@@ -48,6 +52,13 @@ func main() {
 	log.Println("Launched!")
 	go battleManager.Run()
 	go playerManager.Run()
+
+	if flagDebug {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
+
 	select {}
 }
 

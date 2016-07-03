@@ -66,6 +66,11 @@ var MonsterTypes = []*MonsterType{
 		LvlStart: 15,
 		LvlEnd:   100,
 	},
+	&MonsterType{
+		Name:     "Lamp",
+		LvlStart: 100,
+		LvlEnd:   1000,
+	},
 }
 
 type MonsterType struct {

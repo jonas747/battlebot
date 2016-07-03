@@ -65,8 +65,8 @@ func (bm *BattleManager) MaybeAcceptBattle(id string) bool {
 }
 
 func (bm *BattleManager) Run() {
+	ticker := time.NewTicker(time.Second)
 	for {
-		ticker := time.NewTicker(time.Second)
 		select {
 		case <-ticker.C:
 			bm.Lock()
