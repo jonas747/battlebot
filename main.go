@@ -97,6 +97,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 
 	// Remove our mention
 	cmd = strings.Replace(cmd, "<@"+dgo.State.User.ID+">", "", 1)
+	cmd = strings.Replace(cmd, "<@!"+dgo.State.User.ID+">", "", 1)
 	cmd = strings.TrimSpace(cmd)
 
 	fields := strings.Fields(cmd)
