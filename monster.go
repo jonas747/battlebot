@@ -81,10 +81,6 @@ type MonsterType struct {
 
 func GetMonster(level int) *Monster {
 	monsterType := RandomMonsterType(level)
-	if monsterType == nil {
-		return nil
-	}
-
 	modifier := RandomMonsterModifier()
 
 	monster := &Monster{
@@ -121,7 +117,11 @@ func RandomMonsterType(level int) *MonsterType {
 		}
 	}
 	if len(pool) < 1 {
-		return nil
+		return &MonsterType{
+			Name:     "Bot",
+			LvlStart: 0,
+			LvlEnd:   0,
+		}
 	}
 
 	return pool[rand.Intn(len(pool))]
