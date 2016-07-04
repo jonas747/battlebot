@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"errors"
@@ -12,22 +12,24 @@ import (
 )
 
 const (
-	VERSION = "BattleBot 0.0.3 Alpha"
+	VERSION = "BattleBot 0.0.4 Alpha"
 )
 
 var (
 	flagToken string
 	flagDebug bool
 	dgo       *discordgo.Session
-	commands  []*CommandDef
+	Commands  []*CommandDef = make([]*CommandDef, 0)
+	ItemTypes []*ItemType   = make([]*ItemType, 0)
 )
 
 func init() {
 	flag.StringVar(&flagToken, "t", "", "Token to use")
 	flag.BoolVar(&flagDebug, "d", false, "Set to turn on debug info, such as pprof http server")
-	flag.Parse()
 
-	commands = CommonCommands
+	if !flag.Parsed() {
+		flag.Parse()
+	}
 }
 
 func PanicErr(err error) {
@@ -36,7 +38,7 @@ func PanicErr(err error) {
 	}
 }
 
-func main() {
+func Run() {
 	log.Println("Launching " + VERSION)
 
 	session, err := discordgo.New(flagToken)
@@ -50,8 +52,8 @@ func main() {
 	PanicErr(err)
 
 	log.Println("Launched!")
-	go battleManager.Run()
-	go playerManager.Run()
+	go Battles.Run()
+	go Players.Run()
 
 	if flagDebug {
 		go func() {
@@ -60,6 +62,24 @@ func main() {
 	}
 
 	select {}
+}
+
+// Registers commands to the command system
+// Only safe to call before bot has started
+func RegisterCommands(cmds ...*CommandDef) {
+	if Commands == nil {
+		Commands = make([]*CommandDef, 0, len(cmds))
+	}
+	Commands = append(Commands, cmds...)
+}
+
+// Registers items to the item system
+// Only safe to call before bot has started
+func RegisterItems(items ...*ItemType) {
+	if ItemTypes == nil {
+		ItemTypes = make([]*ItemType, 0, len(items))
+	}
+	ItemTypes = append(ItemTypes, items...)
 }
 
 func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -107,7 +127,7 @@ func HandleCommand(cmd string, m *discordgo.MessageCreate) error {
 
 	cmdName := strings.ToLower(fields[0])
 
-	for _, v := range commands {
+	for _, v := range Commands {
 
 		match := v.Name == cmdName
 		if !match {

@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var battleManager = &BattleManager{
+var Battles = &BattleManager{
 	Battles: make([]*Battle, 0),
 }
 

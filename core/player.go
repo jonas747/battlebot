@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	playerManager = &PlayerManager{Players: make([]*Player, 0)}
+	Players = &PlayerManager{Players: make([]*Player, 0)}
 )
 
 type PlayerManager struct {

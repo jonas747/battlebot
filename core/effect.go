@@ -1,4 +1,4 @@
-package main
+package core
 
 type Effect interface {
 	Init(owner *BattlePlayer, opponent *BattlePlayer, battle *Battle)

@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"errors"
@@ -100,7 +100,7 @@ func (p *ParsedArgument) DiscordUser() *discordgo.User {
 
 func (p *ParsedArgument) GetCreatePlayer() *Player {
 	user := p.DiscordUser()
-	return playerManager.GetCreatePlayer(user.ID, user.Username)
+	return Players.GetCreatePlayer(user.ID, user.Username)
 }
 
 type ParsedCommand struct {

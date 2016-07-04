@@ -1,9 +1,18 @@
-package main
+package core
 
 import (
 	"math/rand"
 	"strings"
 )
+
+func GetItemTypeById(id int) *ItemType {
+	for _, v := range ItemTypes {
+		if v.Id == id {
+			return v
+		}
+	}
+	return nil
+}
 
 // General item definition
 type ItemType struct {
@@ -48,7 +57,7 @@ const (
 	EquipmentSlotLeggings
 )
 
-func StringEquipmentSlot(slot EquipmentSlot) string {
+func (slot EquipmentSlot) String() string {
 	switch slot {
 
 	case EquipmentSlotNone:
