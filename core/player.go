@@ -182,13 +182,19 @@ func (p *Player) GetPrettyDiscordStats() string {
 	next := GetXPForLevel(level+1) - GetXPForLevel(level)
 	curXp := p.XP - GetXPForLevel(level)
 
+	// General info
 	general := fmt.Sprintf(" - Level: %d\n - Attribute points: %d\n - XP: %d (%d)\n - Money %d$\n - Wins: %d\n - Losses: %d",
 		GetLevelFromXP(p.XP), p.AvailableAttributePoints(), curXp, next, p.Money, p.Wins, p.Losses)
 
-	attributes := fmt.Sprintf(" - Strength: %d (increases damage)\n - Stamina: %d (increases health)\n - Agility: %d (increases dodge chance, decreases miss chance)",
-		p.Attributes.Get(AttributeStrength), p.Attributes.Get(AttributeStamina), p.Attributes.Get(AttributeAgility))
+	// Create a battleplayer since that manages item stats for us
+	bp := NewBattlePlayer(p)
+	bp.Init(nil, nil)
 
-	stats := fmt.Sprintf(" - Health: %d\n - Damage %.2f\n - Dodge Chance: %.2f%%\n - Miss Chance: %.2f%%", p.MaxHealth(), p.BaseDamage(), p.BaseDodgeChange(), p.BaseMissChance())
+	attributes := fmt.Sprintf(" - Strength: %d (+%d) (increases damage)\n - Stamina: %d(+%d) (increases health)\n - Agility: %d (+%d) (increases dodge chance, decreases miss chance)",
+		p.Attributes.Get(AttributeStrength), bp.Attributes.Get(AttributeStrength), p.Attributes.Get(AttributeStamina), bp.Attributes.Get(AttributeStamina), p.Attributes.Get(AttributeAgility), bp.Attributes.Get(AttributeAgility))
+
+	stats := fmt.Sprintf(" - Health: %.2f\n - Damage %.2f\n - Dodge Chance: %.2f%%\n - Miss Chance: %.2f%%",
+		bp.MaxHealth(), bp.Damage(), bp.DodgeChance(), bp.MissChance())
 
 	return general + "\n\n" + attributes + "\n\n" + stats
 }

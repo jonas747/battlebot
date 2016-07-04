@@ -25,7 +25,7 @@ var PlayerCommands = []*core.CommandDef{
 
 			player.RLock()
 
-			out := "**Stats** *excluding attributes from items*\n" + player.GetPrettyDiscordStats()
+			out := "**Stats**\n" + player.GetPrettyDiscordStats()
 
 			player.RUnlock()
 			go core.SendMessage(m.ChannelID, out)
