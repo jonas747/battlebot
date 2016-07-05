@@ -137,5 +137,4 @@ func RandomMonsterModifier() MonsterModifier {
 	} else {
 		return MonsterModifierBoss
 	}
-	return MonsterModifierNormal
 }
