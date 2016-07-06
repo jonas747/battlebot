@@ -91,14 +91,13 @@ func MessageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if strings.Index(m.Content, s.State.User.ID) == 2 {
+	if strings.Index(m.Content, "<@"+s.State.User.ID) == 0 || strings.Index(m.Content, "<@!"+s.State.User.ID) == 0 {
 		err := HandleCommand(m.Content, m)
 		if err != nil {
 			SendMessage(m.ChannelID, "Error: "+err.Error()+" See `@bot help` for more info")
 			log.Println("Error handling command:", err)
 		}
 	}
-
 }
 
 var (

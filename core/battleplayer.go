@@ -46,7 +46,6 @@ func (p *BattlePlayer) Init(opponent *BattlePlayer, battle *Battle) { // initial
 		v.Init(p, opponent, battle)
 		v.Apply()
 	}
-	p.Health = p.MaxHealth()
 }
 
 func (p *BattlePlayer) MaxHealth() float32 {

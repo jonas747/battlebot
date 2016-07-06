@@ -167,6 +167,8 @@ func (b *Battle) Battle() {
 
 	b.Initiator.Init(b.Defender, b)
 	b.Defender.Init(b.Initiator, b)
+	b.Initiator.Health = b.Initiator.MaxHealth()
+	b.Defender.Health = b.Defender.MaxHealth()
 
 	attackersTurn := false
 	for {
